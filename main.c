@@ -181,6 +181,7 @@ GLuint tex1, tex2;
 TextureData ttex, lake_texture; // terrain
 GLuint skyTex;
 GLuint dirtTex;
+GLuint heightTex;
 
 Point3D lightSourcesColorsArr[] = { { 1.0f, 0.0f, 0.0f }, // Red light
 { 0.0f, 1.0f, 0.0f }, // Green light
@@ -213,6 +214,7 @@ void init(void)
 	LoadTGATextureSimple("SkyBox512.tga", &skyTex);
 	LoadTGATextureSimple("grassplus.tga", &tex1);
 	LoadTGATextureSimple("dirt.tga", &dirtTex);
+	LoadTGATextureSimple("fft-terrain.tga", &heightTex);
 
 	// Load and compile shader
 	program = loadShaders("shader.vert", "shader.frag");
@@ -238,7 +240,7 @@ void init(void)
 		}
 	}
 	glUseProgram(snowprogram);
-	glUniform1fv(glGetUniformLocation(snowprogram, "heights"), 256 * 256, heights);
+	glUniform1fv(glGetUniformLocation(snowprogram, "heights"), 100, heights);
 		
 	printError("init terrain");
 
@@ -257,6 +259,8 @@ void init(void)
 	glBindTexture(GL_TEXTURE_2D, skyTex);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, dirtTex);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, heightTex);
 }
 
 bool firstCall = true;
@@ -303,6 +307,7 @@ void display(void)
 	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 1);
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "drawing_objects"), 1);
+	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
 	//draw(borg1, Mult(T(107, GetHeight(&ttex, 107, 215), 215), S(0.1, 0.1, 0.1)));
 	//draw(borg2, Mult(T(107, GetHeight(&ttex, 107, 215), 215), S(0.1, 0.1, 0.1)));
 	//draw(boll, Mult(T(127,GetHeight(&ttex,127,235),235),S(3,3,3)));
@@ -310,7 +315,7 @@ void display(void)
 	//draw(boll, Mult(T(200, GetHeight(&ttex, 200, 127), 127), S(3, 3, 3)));
 	//draw(boll, Mult(T(100 + 100 * sin(0.0001*t), GetHeight(&ttex, 100 + 100 * sin(0.0001*t), 75), 75), S(3, 3, 3)));
 	glUseProgram(snowprogram);
-	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(3, 3, 3).m);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(1, 1, 1).m);
 	DrawModelInstanced(boll, snowprogram, "inPosition", "inNormal", "", 30);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 0);

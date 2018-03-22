@@ -44,5 +44,8 @@
     <None Include="shader.vert">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="snow_shader.vert">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
