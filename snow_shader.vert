@@ -16,6 +16,7 @@ uniform mat4 modelToWorldMatrix;
 uniform float time;
 uniform float time_0;
 uniform float heights[100];
+float rand(vec2 co);
 void main(void)
 {
 	mat3 normalMatrix = mat3(modelToWorldMatrix);
@@ -28,8 +29,8 @@ void main(void)
 	float z_tex_coord = z_coord/256.0;
 	float x_tex_coord = x_coord/256.0;
 
-	float z_coord_noised = z_coord + 1 * sin(0.00001 * time * float(gl_InstanceID));
-	float x_coord_noised = x_coord + 1 * cos(0.00001 * time * float(gl_InstanceID));
+	float z_coord_noised = z_coord + 1 * rand(vec2(gl_InstanceID,time / 10000));
+	float x_coord_noised = x_coord + 1 * rand(vec2(time / 10000,gl_InstanceID));
 
     float height = 20 - 0.001*(time-time_0);
 	float ground_height = texture(heightTex, vec2(x_tex_coord, z_tex_coord)).x * 256.0/ 20.0;
@@ -44,4 +45,9 @@ void main(void)
 
 	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 
 		+ vec4(x_coord_noised, height, z_coord_noised, 0));
+}
+
+float rand(vec2 co)
+{
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
