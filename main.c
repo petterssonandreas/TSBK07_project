@@ -259,6 +259,8 @@ void init(void)
 	glBindTexture(GL_TEXTURE_2D, dirtTex);
 }
 
+bool firstCall = true;
+
 void display(void)
 {
 	// clear the screen
@@ -266,6 +268,15 @@ void display(void)
 
 	handleKeyboardEvent();
 	GLfloat t = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
+	if (firstCall)
+	{
+		glUseProgram(program);
+		glUniform1f(glGetUniformLocation(program, "time_0"), t);
+		glUseProgram(snowprogram);
+		glUniform1f(glGetUniformLocation(snowprogram, "time_0"), t);
+		firstCall = false;
+	}
+
 
 	printError("pre display");
 
