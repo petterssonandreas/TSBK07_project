@@ -22,17 +22,26 @@ void main(void)
     normal = normalMatrix * inNormal;
 	texCoord = inTexCoord;
     exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
-    float inst = float(gl_InstanceID);
-	float z_inst = float(gl_InstanceID % 256);
-	float x_inst = float(gl_InstanceID / 256);
-	float z_coord = z_inst/256.0;
-	float x_coord = x_inst/256.0;
-    int pos = int(inst * 256.0);
+
+	float z_coord = float(gl_InstanceID % 256);
+	float x_coord = float(gl_InstanceID / 256);
+	float z_tex_coord = z_coord/256.0;
+	float x_tex_coord = x_coord/256.0;
+
+	float z_coord_noised = z_coord + 1 * sin(0.00001 * time * float(gl_InstanceID));
+	float x_coord_noised = x_coord + 1 * cos(0.00001 * time * float(gl_InstanceID));
+
     float height = 20 - 0.001*(time-time_0);
-   	if (height < texture(heightTex, vec2(x_coord, z_coord)).x * 256.0/ 20.0)
+	float ground_height = texture(heightTex, vec2(x_tex_coord, z_tex_coord)).x * 256.0/ 20.0;
+
+   	if (height < ground_height)
    	{
-   		height = texture(heightTex, vec2(x_coord, z_coord)).x * 256.0/ 20.0;
+   		height = ground_height;
+		x_coord_noised = x_coord;
+		z_coord_noised = z_coord;
    	}
+	
+
 	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 
-		+ vec4(gl_InstanceID / 256, height, gl_InstanceID % 256, 0));
+		+ vec4(x_coord_noised, height, z_coord_noised, 0));
 }
