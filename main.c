@@ -315,8 +315,8 @@ void display(void)
 	//draw(boll, Mult(T(200, GetHeight(&ttex, 200, 127), 127), S(3, 3, 3)));
 	//draw(boll, Mult(T(100 + 100 * sin(0.0001*t), GetHeight(&ttex, 100 + 100 * sin(0.0001*t), 75), 75), S(3, 3, 3)));
 	glUseProgram(snowprogram);
-	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(1, 1, 1).m);
-	DrawModelInstanced(boll, snowprogram, "inPosition", "inNormal", "", 30);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(0.1, 0.1, 0.1).m);
+	DrawModelInstanced(boll, snowprogram, "inPosition", "inNormal", "", 256*256);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 0);
 	glUseProgram(snowprogram);

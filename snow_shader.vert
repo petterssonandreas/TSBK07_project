@@ -23,13 +23,16 @@ void main(void)
 	texCoord = inTexCoord;
     exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
     float inst = float(gl_InstanceID);
-	float z_coord = inst/256.0;
+	float z_inst = float(gl_InstanceID % 256);
+	float x_inst = float(gl_InstanceID / 256);
+	float z_coord = z_inst/256.0;
+	float x_coord = x_inst/256.0;
     int pos = int(inst * 256.0);
-    float height = 10 - 0.001*(time-time_0);
-   	if (height < 0)
+    float height = 20 - 0.001*(time-time_0);
+   	if (height < texture(heightTex, vec2(x_coord, z_coord)).x * 256.0/ 20.0)
    	{
-   		height = 0;
+   		height = texture(heightTex, vec2(x_coord, z_coord)).x * 256.0/ 20.0;
    	}
-	gl_Position = projMatrix * worldToViewMatrix * modelToWorldMatrix * (vec4(inPosition, 1.0) 
-		+ vec4(0, texture(heightTex, vec2(0, z_coord)).x * 256.0/ 20.0, gl_InstanceID, 0));
+	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 
+		+ vec4(gl_InstanceID / 256, height, gl_InstanceID % 256, 0));
 }
