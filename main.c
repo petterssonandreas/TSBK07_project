@@ -16,6 +16,7 @@ void draw(Model* model, mat4 mdlMatrix);
 void drawLake(Model* model, mat4 mdlMatrix);
 void drawSkybox();
 void drawTerrain();
+void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char* normalVariableName, char* texCoordVariableName, int count);
 
 mat4 projectionMatrix;
 vec3 camPos = { 10.0f, 0.0f, 0.0f };
@@ -175,7 +176,7 @@ Model* GenerateTerrain(TextureData *tex)
 // vertex array object
 Model *m, *m2, *tm, *boll, *lake_model, *skyModel, *borg1, *borg2;
 // Reference to shader program
-GLuint program;
+GLuint program, snowprogram;
 GLuint tex1, tex2;
 TextureData ttex, lake_texture; // terrain
 GLuint skyTex;
@@ -192,7 +193,7 @@ Point3D lightSourcesDirectionsPositions[] = { { 10.0f, 5.0f, 0.0f }, // Red ligh
 { -1.0f, 0.0f, 0.0f }, // Blue light along X
 { 0.0f, 0.0f, -1.0f } }; // White light along Z
 
-
+GLfloat heights[256*256];
 void init(void)
 {
 	// GL inits
@@ -215,16 +216,30 @@ void init(void)
 
 	// Load and compile shader
 	program = loadShaders("shader.vert", "shader.frag");
-	glUseProgram(program);
+	snowprogram = loadShaders("snow_shader.vert", "shader.frag");
+	
 	printError("init shader");
 
 	projectionMatrix = frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 1000.0);
+	glUseProgram(program);
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUseProgram(snowprogram);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 
 
 	// Load terrain data
 	LoadTGATextureData("fft-terrain.tga", &ttex);
 	tm = GenerateTerrain(&ttex);
+	for (int x = 0; x < 256; x++)
+	{
+		for (int y = 0; y < 256; y++)
+		{
+			heights[y + x*256] = GetHeight(&ttex, x, y);
+		}
+	}
+	glUseProgram(snowprogram);
+	glUniform1fv(glGetUniformLocation(snowprogram, "heights"), 256 * 256, heights);
+		
 	printError("init terrain");
 
 	// Load lake
@@ -257,26 +272,43 @@ void display(void)
 
 	// Build matrix
 	mat4 worldToView = lookAtv(camPos, camLookAt, camUp);
+	glUseProgram(program);
 	glUniform3fv(glGetUniformLocation(program, "cameraPos"), 1, &camPos.x);
 	glUniformMatrix4fv(glGetUniformLocation(program, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
+	glUseProgram(snowprogram);
+	glUniform3fv(glGetUniformLocation(snowprogram, "cameraPos"), 1, &camPos.x);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
 
 
 	// Draw world
+	glUseProgram(program);
 	drawSkybox();
 	drawLake(lake_model, T(0, -GetHeight(&lake_texture, 0, 0), 0));
 	drawTerrain();
 
 
 	// Draw spheres
+	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 1);
-	draw(borg1, Mult(T(107, GetHeight(&ttex, 107, 215), 215), S(0.1, 0.1, 0.1)));
-	draw(borg2, Mult(T(107, GetHeight(&ttex, 107, 215), 215), S(0.1, 0.1, 0.1)));
+	glUseProgram(snowprogram);
+	glUniform1i(glGetUniformLocation(snowprogram, "drawing_objects"), 1);
+	//draw(borg1, Mult(T(107, GetHeight(&ttex, 107, 215), 215), S(0.1, 0.1, 0.1)));
+	//draw(borg2, Mult(T(107, GetHeight(&ttex, 107, 215), 215), S(0.1, 0.1, 0.1)));
 	//draw(boll, Mult(T(127,GetHeight(&ttex,127,235),235),S(3,3,3)));
-	draw(boll, Mult(T(67, GetHeight(&ttex, 67, 89), 89), S(3, 3, 3)));
-	draw(boll, Mult(T(200, GetHeight(&ttex, 200, 127), 127), S(3, 3, 3)));
-	draw(boll, Mult(T(100 + 100 * sin(0.0001*t), GetHeight(&ttex, 100 + 100 * sin(0.0001*t), 75), 75), S(3, 3, 3)));
+	//draw(boll, Mult(T(67, GetHeight(&ttex, 67, 89), 89), S(3, 3, 3)));
+	//draw(boll, Mult(T(200, GetHeight(&ttex, 200, 127), 127), S(3, 3, 3)));
+	//draw(boll, Mult(T(100 + 100 * sin(0.0001*t), GetHeight(&ttex, 100 + 100 * sin(0.0001*t), 75), 75), S(3, 3, 3)));
+	glUseProgram(snowprogram);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(3, 3, 3).m);
+	DrawModelInstanced(boll, snowprogram, "inPosition", "inNormal", "", 30);
+	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 0);
-
+	glUseProgram(snowprogram);
+	glUniform1i(glGetUniformLocation(snowprogram, "drawing_objects"), 0);
+	glUseProgram(program);
+	glUniform1f(glGetUniformLocation(program, "time"), t);
+	glUseProgram(snowprogram);
+	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
 	printError("display 2");
 
 	glutSwapBuffers();
@@ -300,7 +332,7 @@ int main(int argc, char *argv[])
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitContextVersion(3, 2);
 	glutInitWindowSize(700, 700);
-	glutCreateWindow ("TSBK07 Lab 4");
+	glutCreateWindow ("TSBK07 Project");
 #ifdef WIN32
 	glewInit();
 #endif
@@ -445,5 +477,54 @@ void handleKeyboardEvent()
 		camLookAt = VectorAdd(camPos, camLookAt);
 
 		camUp = Normalize(CrossProduct(planarComp, VectorSub(camLookAt, camPos)));
+	}
+}
+
+void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char* normalVariableName, char* texCoordVariableName, int count)
+{
+	if (m != NULL)
+	{
+		GLint loc;
+
+		glBindVertexArray(m->vao);	// Select VAO
+
+		glBindBuffer(GL_ARRAY_BUFFER, m->vb);
+		loc = glGetAttribLocation(program, vertexVariableName);
+		if (loc >= 0)
+		{
+			glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+			glEnableVertexAttribArray(loc);
+		}
+		else
+			fprintf(stderr, "DrawModel warning: '%s' not found in shader!\n", vertexVariableName);
+
+		if (normalVariableName != NULL)
+		{
+			loc = glGetAttribLocation(program, normalVariableName);
+			if (loc >= 0)
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, m->nb);
+				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+				glEnableVertexAttribArray(loc);
+			}
+			else
+				fprintf(stderr, "DrawModel warning: '%s' not found in shader!\n", normalVariableName);
+		}
+
+		// VBO for texture coordinate data NEW for 5b
+		if ((m->texCoordArray != NULL) && (texCoordVariableName != NULL))
+		{
+			loc = glGetAttribLocation(program, texCoordVariableName);
+			if (loc >= 0)
+			{
+				glBindBuffer(GL_ARRAY_BUFFER, m->tb);
+				glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, 0, 0);
+				glEnableVertexAttribArray(loc);
+			}
+			else
+				fprintf(stderr, "DrawModel warning: '%s' not found in shader!\n", texCoordVariableName);
+		}
+
+		glDrawElementsInstanced(GL_TRIANGLES, m->numIndices, GL_UNSIGNED_INT, 0L, count);
 	}
 }
