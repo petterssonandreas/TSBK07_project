@@ -181,6 +181,7 @@ GLuint tex1, tex2;
 TextureData ttex, lake_texture; // terrain
 GLuint skyTex;
 GLuint dirtTex;
+GLuint snowTex;
 GLuint heightTex;
 
 Point3D lightSourcesColorsArr[] = { { 1.0f, 0.0f, 0.0f }, // Red light
@@ -206,7 +207,7 @@ void init(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	printError("GL inits");
 
-	boll = LoadModelPlus("groundsphere.obj");
+	boll = LoadModelPlus("plate.obj");
 	borg1 = LoadModelPlus("rooftops.obj");
 	borg2 = LoadModelPlus("walls.obj");
 	skyModel = LoadModelPlus("skybox.obj");
@@ -214,11 +215,12 @@ void init(void)
 	LoadTGATextureSimple("SkyBox512.tga", &skyTex);
 	LoadTGATextureSimple("grassplus.tga", &tex1);
 	LoadTGATextureSimple("dirt.tga", &dirtTex);
+	LoadTGATextureSimple("snowflake.tga", &snowTex);
 	LoadTGATextureSimple("fft-terrain.tga", &heightTex);
 
 	// Load and compile shader
 	program = loadShaders("shader.vert", "shader.frag");
-	snowprogram = loadShaders("snow_shader.vert", "shader.frag");
+	snowprogram = loadShaders("snow_shader.vert", "snow_shader.frag");
 	
 	printError("init shader");
 
@@ -261,6 +263,8 @@ void init(void)
 	glBindTexture(GL_TEXTURE_2D, dirtTex);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, heightTex);
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, snowTex);
 }
 
 bool firstCall = true;
@@ -316,7 +320,8 @@ void display(void)
 	//draw(boll, Mult(T(100 + 100 * sin(0.0001*t), GetHeight(&ttex, 100 + 100 * sin(0.0001*t), 75), 75), S(3, 3, 3)));
 	glUseProgram(snowprogram);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(0.1, 0.1, 0.1).m);
-	DrawModelInstanced(boll, snowprogram, "inPosition", "inNormal", "", 256*256);
+	glUniform1i(glGetUniformLocation(snowprogram, "tex"), 4);
+	DrawModelInstanced(boll, snowprogram, "inPosition", "inNormal", "inTexCoord", 256*256);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 0);
 	glUseProgram(snowprogram);
