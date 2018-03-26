@@ -5,7 +5,7 @@ in  vec3 inNormal;
 in vec2 inTexCoord;
 
 out vec2 texCoord;
-out vec3 normal;
+//out vec3 normal;
 out vec3 exSurface;
 
 uniform sampler2D heightTex;
@@ -20,7 +20,7 @@ float rand(vec2 co);
 void main(void)
 {
 	mat3 normalMatrix = mat3(modelToWorldMatrix);
-    normal = normalMatrix * inNormal;
+    //normal = normalMatrix * inNormal;
 	texCoord = inTexCoord;
     exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
 

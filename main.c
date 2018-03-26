@@ -10,6 +10,7 @@
 
 #include <time.h>
 #include <stdlib.h>
+#include <math.h>
 
 void handleKeyboardEvent();
 void draw(Model* model, mat4 mdlMatrix);
@@ -319,7 +320,7 @@ void display(void)
 	//draw(boll, Mult(T(200, GetHeight(&ttex, 200, 127), 127), S(3, 3, 3)));
 	//draw(boll, Mult(T(100 + 100 * sin(0.0001*t), GetHeight(&ttex, 100 + 100 * sin(0.0001*t), 75), 75), S(3, 3, 3)));
 	glUseProgram(snowprogram);
-	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(0.1, 0.1, 0.1).m);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, Mult(Mult(Ry(M_PI/2.0), Rx(M_PI/2.0)), S(0.1, 0.1, 0.1)).m);
 	glUniform1i(glGetUniformLocation(snowprogram, "tex"), 4);
 	DrawModelInstanced(boll, snowprogram, "inPosition", "inNormal", "inTexCoord", 256*256);
 	glUseProgram(program);
