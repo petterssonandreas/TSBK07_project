@@ -322,7 +322,7 @@ void display(void)
 	glUseProgram(snowprogram);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, Mult(Mult(Ry(M_PI/2.0), Rx(M_PI/2.0)), S(0.1, 0.1, 0.1)).m);
 	glUniform1i(glGetUniformLocation(snowprogram, "tex"), 4);
-	DrawModelInstanced(boll, snowprogram, "inPosition", "inNormal", "inTexCoord", 256*256);
+	DrawModelInstanced(boll, snowprogram, "inPosition", NULL, "inTexCoord", 256*256);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 0);
 	glUseProgram(snowprogram);
