@@ -5,9 +5,15 @@ in  vec3 inPosition;
 in  vec3 inNormal;
 in vec2 inTexCoord;
 
+ layout(std430, binding = 3) buffer layoutName
+ {
+     int data_SSBO[];
+ };
+
 out vec2 texCoord;
 //out vec3 normal;
 out vec3 exSurface;
+//out int InstanceID;
 
 uniform sampler2D heightTex;
 uniform mat4 projMatrix;
@@ -17,9 +23,10 @@ uniform float time;
 uniform float time_0;
 
 float snoise(vec2 v);
-
+ 
 void main(void)
 {
+	//InstanceID = gl_InstanceID;
 	mat3 normalMatrix = mat3(modelToWorldMatrix);
     //normal = normalMatrix * inNormal;
 	texCoord = inTexCoord;
@@ -48,13 +55,24 @@ void main(void)
 	float x_tex_coord = x_coord/256.0;
 
     float height = 200 * snoise(vec2(gl_InstanceID*2,gl_InstanceID*3)) - 0.001*(time-time_0);
+	
+	//float height = data_SSBO[gl_InstanceID];
+	//data_SSBO[gl_InstanceID] = data_SSBO[gl_InstanceID] + 1;
 	float ground_height = texture(heightTex, vec2(x_tex_coord, z_tex_coord)).x * 256.0/ 20.0;
 
-   	if (height < ground_height)
+
+
+   	
+
+   	if(data_SSBO[gl_InstanceID] == 1)
+	{
+		height = 0;
+	}
+	else if (height < ground_height)
    	{
    		height = ground_height;
+   		data_SSBO[gl_InstanceID] = 1;
    	}
-	
 
 	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 
 		+ vec4(x_coord, height, z_coord, 0));
@@ -66,7 +84,7 @@ void main(void)
 //      Author : Ian McEwan, Ashima Arts.
 //  Maintainer : stegu
 //     Lastmod : 20110822 (ijm)
-//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.
+	//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.
 //               Distributed under the MIT License. See LICENSE file.
 //               https://github.com/ashima/webgl-noise
 //               https://github.com/stegu/webgl-noise
@@ -85,7 +103,7 @@ vec3 permute(vec3 x) {
 }
 
 float snoise(vec2 v)
-  {
+{
   const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
                       0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
                      -0.577350269189626,  // -1.0 + 2.0 * C.x

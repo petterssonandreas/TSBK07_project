@@ -247,6 +247,19 @@ void init(void)
 		
 	printError("init terrain");
 
+	GLuint ssbo;
+	GLint data_SSBO[256*256];
+	for (int i = 1; i < 256 * 256; i++)
+	{
+		data_SSBO[i] = 0;
+	}
+	glGenBuffers(1, &ssbo);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLint)*256*256, NULL, GL_DYNAMIC_COPY);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(data_SSBO), data_SSBO);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 	// Load lake
 	LoadTGATextureData("lake_bottom.tga", &lake_texture);
 	lake_model = GenerateTerrain(&lake_texture);
@@ -305,6 +318,8 @@ void display(void)
 	drawSkybox();
 	drawLake(lake_model, T(0, -GetHeight(&lake_texture, 0, 0), 0));
 	drawTerrain();
+
+	
 
 
 	// Draw spheres
@@ -509,7 +524,6 @@ void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char
 		GLint loc;
 
 		glBindVertexArray(m->vao);	// Select VAO
-
 		glBindBuffer(GL_ARRAY_BUFFER, m->vb);
 		loc = glGetAttribLocation(program, vertexVariableName);
 		if (loc >= 0)
