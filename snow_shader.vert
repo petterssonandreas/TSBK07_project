@@ -7,7 +7,7 @@ in vec2 inTexCoord;
 
  layout(std430, binding = 3) buffer layoutName
  {
-     int data_SSBO[];
+    int data_SSBO[];
  };
 
 out vec2 texCoord;
@@ -26,11 +26,9 @@ float snoise(vec2 v);
  
 void main(void)
 {
-	//InstanceID = gl_InstanceID;
 	mat3 normalMatrix = mat3(modelToWorldMatrix);
-    //normal = normalMatrix * inNormal;
 	texCoord = inTexCoord;
-    exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
+  exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
 
 	float z_coord = 256 * snoise(vec2(gl_InstanceID,2));
 	while (z_coord > 256.0)
@@ -54,25 +52,23 @@ void main(void)
 	float z_tex_coord = z_coord/256.0;
 	float x_tex_coord = x_coord/256.0;
 
-    float height = 200 * snoise(vec2(gl_InstanceID*2,gl_InstanceID*3)) - 0.001*(time-time_0);
+  //If the starting height has not been called, calculate
+  if (data_SSBO[gl_InstanceID] == 0)
+  {
+    data_SSBO[gl_InstanceID] = int(1000000 * 200 * snoise(vec2(gl_InstanceID*2,gl_InstanceID*3)));
+  }
+
+  data_SSBO[gl_InstanceID] -= 10000;
+  float height = float(data_SSBO[gl_InstanceID]) / 1000000.0;
 	
-	//float height = data_SSBO[gl_InstanceID];
-	//data_SSBO[gl_InstanceID] = data_SSBO[gl_InstanceID] + 1;
+  //Calculate the ground height at this vertex
 	float ground_height = texture(heightTex, vec2(x_tex_coord, z_tex_coord)).x * 256.0/ 20.0;
 
-
-
-   	
-
-   	if(data_SSBO[gl_InstanceID] == 1)
-	{
-		height = 0;
-	}
-	else if (height < ground_height)
-   	{
-   		height = ground_height;
-   		data_SSBO[gl_InstanceID] = 1;
-   	}
+  //Prevent the snowflakes from falling through the ground
+  if (height < ground_height)
+  {
+  	height = ground_height;
+  }
 
 	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 
 		+ vec4(x_coord, height, z_coord, 0));
