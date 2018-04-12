@@ -175,7 +175,7 @@ Model* GenerateTerrain(TextureData *tex)
 
 
 // vertex array object
-Model *m, *m2, *tm, *boll, *lake_model, *skyModel, *borg1, *borg2;
+Model *m, *m2, *tm, *boll, *lake_model, *skyModel, *borg1, *borg2, *cube;
 // Reference to shader program
 GLuint program, snowprogram;
 GLuint tex1, tex2;
@@ -212,6 +212,7 @@ void init(void)
 	borg1 = LoadModelPlus("rooftops.obj");
 	borg2 = LoadModelPlus("walls.obj");
 	skyModel = LoadModelPlus("skybox.obj");
+	cube = LoadModelPlus("cube.obj");
 
 	LoadTGATextureSimple("SkyBox512.tga", &skyTex);
 	LoadTGATextureSimple("grassplus.tga", &tex1);
@@ -328,16 +329,12 @@ void display(void)
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "drawing_objects"), 1);
 	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
-	//draw(borg1, Mult(T(107, GetHeight(&ttex, 107, 215), 215), S(0.1, 0.1, 0.1)));
-	//draw(borg2, Mult(T(107, GetHeight(&ttex, 107, 215), 215), S(0.1, 0.1, 0.1)));
-	//draw(boll, Mult(T(127,GetHeight(&ttex,127,235),235),S(3,3,3)));
-	//draw(boll, Mult(T(67, GetHeight(&ttex, 67, 89), 89), S(3, 3, 3)));
-	//draw(boll, Mult(T(200, GetHeight(&ttex, 200, 127), 127), S(3, 3, 3)));
-	//draw(boll, Mult(T(100 + 100 * sin(0.0001*t), GetHeight(&ttex, 100 + 100 * sin(0.0001*t), 75), 75), S(3, 3, 3)));
+
 	glUseProgram(snowprogram);
-	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, Mult(Mult(Ry(M_PI/2.0), Rx(M_PI/2.0)), S(0.1, 0.1, 0.1)).m);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(0.05, 0.05, 0.05).m);
 	glUniform1i(glGetUniformLocation(snowprogram, "tex"), 4);
-	DrawModelInstanced(boll, snowprogram, "inPosition", NULL, "inTexCoord", 256*256);
+	DrawModelInstanced(cube, snowprogram, "inPosition", NULL, "inTexCoord", 256*256);
+
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 0);
 	glUseProgram(snowprogram);
