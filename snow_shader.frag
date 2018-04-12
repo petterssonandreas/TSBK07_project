@@ -7,12 +7,6 @@ in vec2 texCoord;
 //in vec3 normal;
 in vec3 exSurface;
 
- layout(std430, binding = 3) buffer layoutName
- {
-     int data_SSBO[];
- };
-
-
 uniform sampler2D tex;
 
 void main(void)

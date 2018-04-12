@@ -248,15 +248,17 @@ void init(void)
 		
 	printError("init terrain");
 
-	GLuint ssbo;
-	GLint data_SSBO[256*256];
+	GLuint ssbo = 0;
+	vec3 data_SSBO[256*256];
 	for (int i = 1; i < 256 * 256; i++)
 	{
-		data_SSBO[i] = 0;
+		data_SSBO[i].x = 0;
+		data_SSBO[i].y = 0;
+		data_SSBO[i].z = 0;
 	}
 	glGenBuffers(1, &ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLint)*256*256, NULL, GL_DYNAMIC_COPY);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vec3)*256*256, NULL, GL_DYNAMIC_COPY);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(data_SSBO), data_SSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
