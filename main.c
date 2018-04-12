@@ -19,7 +19,7 @@ void drawSkybox();
 void drawTerrain();
 void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char* normalVariableName, char* texCoordVariableName, int count);
 
-mat4 projectionMatrix;
+
 vec3 camPos = { 10.0f, 0.0f, 0.0f };
 vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
 vec3 camUp = { 0.0f, 1.0f, 0.0f };
@@ -175,28 +175,19 @@ Model* GenerateTerrain(TextureData *tex)
 
 
 // vertex array object
-Model *m, *m2, *tm, *boll, *lake_model, *skyModel, *borg1, *borg2, *cube;
+Model *terrainModel, *lakeModel, *skyModel, *cubeModel;
 // Reference to shader program
 GLuint program, snowprogram;
-GLuint tex1, tex2;
-TextureData ttex, lake_texture; // terrain
+// Textures for terrain and lake height maps
+TextureData terrainTexture, lakeTexture;
+// References to different textures
+GLuint grassTex;
 GLuint skyTex;
 GLuint dirtTex;
 GLuint snowTex;
 GLuint heightTex;
 
-Point3D lightSourcesColorsArr[] = { { 1.0f, 0.0f, 0.0f }, // Red light
-{ 0.0f, 1.0f, 0.0f }, // Green light
-{ 0.0f, 0.0f, 1.0f }, // Blue light
-{ 1.0f, 1.0f, 1.0f } }; // White light
-GLfloat specularExponent[] = { 10.0, 20.0, 60.0, 5.0 };
-GLint isDirectional[] = { 0,0,1,1 };
-Point3D lightSourcesDirectionsPositions[] = { { 10.0f, 5.0f, 0.0f }, // Red light, positional
-{ 0.0f, 5.0f, 10.0f }, // Green light, positional
-{ -1.0f, 0.0f, 0.0f }, // Blue light along X
-{ 0.0f, 0.0f, -1.0f } }; // White light along Z
 
-GLfloat heights[256*256];
 void init(void)
 {
 	// GL inits
@@ -208,46 +199,42 @@ void init(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	printError("GL inits");
 
-	boll = LoadModelPlus("plate.obj");
-	borg1 = LoadModelPlus("rooftops.obj");
-	borg2 = LoadModelPlus("walls.obj");
+	// Load models
 	skyModel = LoadModelPlus("skybox.obj");
-	cube = LoadModelPlus("cube.obj");
+	cubeModel = LoadModelPlus("cube.obj");
+	printError("GL init load models");
 
+	// Load textures
 	LoadTGATextureSimple("SkyBox512.tga", &skyTex);
-	LoadTGATextureSimple("grassplus.tga", &tex1);
+	LoadTGATextureSimple("grassplus.tga", &grassTex);
 	LoadTGATextureSimple("dirt.tga", &dirtTex);
 	LoadTGATextureSimple("snowflake.tga", &snowTex);
 	LoadTGATextureSimple("fft-terrain.tga", &heightTex);
+	printError("GL init load textures");
 
 	// Load and compile shader
 	program = loadShaders("shader.vert", "shader.frag");
 	snowprogram = loadShaders("snow_shader.vert", "snow_shader.frag");
-	
-	printError("init shader");
+	printError("GL init load shader programs");
 
-	projectionMatrix = frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 1000.0);
+	// Create and send projectionMatrix
+	mat4 projectionMatrix = frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 1000.0);
 	glUseProgram(program);
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	glUseProgram(snowprogram);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
-
+	printError("GL init create and send projectionMatrix");
 
 	// Load terrain data
-	LoadTGATextureData("fft-terrain.tga", &ttex);
-	tm = GenerateTerrain(&ttex);
-	for (int x = 0; x < 256; x++)
-	{
-		for (int y = 0; y < 256; y++)
-		{
-			heights[y + x*256] = GetHeight(&ttex, x, y);
-		}
-	}
-	glUseProgram(snowprogram);
-	glUniform1fv(glGetUniformLocation(snowprogram, "heights"), 100, heights);
-		
-	printError("init terrain");
+	LoadTGATextureData("fft-terrain.tga", &terrainTexture);
+	terrainModel = GenerateTerrain(&terrainTexture);
+	// Load lake
+	LoadTGATextureData("lake_bottom.tga", &lakeTexture);
+	lakeModel = GenerateTerrain(&lakeTexture);
+	printError("GL init load terrain and lake");
 
+
+	// Create and send the buffer for storage in GPU
 	GLuint ssbo;
 	GLint data_SSBO[256*256];
 	for (int i = 1; i < 256 * 256; i++)
@@ -260,18 +247,15 @@ void init(void)
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(data_SSBO), data_SSBO);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	printError("GL init create and send buffer for GPU storage");
 
-	// Load lake
-	LoadTGATextureData("lake_bottom.tga", &lake_texture);
-	lake_model = GenerateTerrain(&lake_texture);
-	printError("init lake");
-
-	camPos.y = GetHeight(&ttex, camPos.x, camPos.z) + 5;
+	// Set a proper height for the camera
+	camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
 	camLookAt.y = camPos.y;
 
 	// Bind textures
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex1);
+	glBindTexture(GL_TEXTURE_2D, grassTex);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, skyTex);
 	glActiveTexture(GL_TEXTURE2);
@@ -280,7 +264,15 @@ void init(void)
 	glBindTexture(GL_TEXTURE_2D, heightTex);
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, snowTex);
+	printError("GL init bind textures");
+
+
+	glUseProgram(snowprogram);
+	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
+	glUniform1i(glGetUniformLocation(snowprogram, "tex"), 4);
+	printError("GL init send texture unit numbers to shader");
 }
+
 
 bool firstCall = true;
 
@@ -288,9 +280,15 @@ void display(void)
 {
 	// clear the screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	printError("GL display clear screen");
 
+	// Handle key events, i.e. movement
 	handleKeyboardEvent();
+	printError("GL display handle keyboard events");
+
+	// Get the elapsed time
 	GLfloat t = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
+
 	if (firstCall)
 	{
 		glUseProgram(program);
@@ -301,10 +299,7 @@ void display(void)
 	}
 
 
-	printError("pre display");
-
-
-	// Build matrix
+	// Build and send worldToView and camPos
 	mat4 worldToView = lookAtv(camPos, camLookAt, camUp);
 	glUseProgram(program);
 	glUniform3fv(glGetUniformLocation(program, "cameraPos"), 1, &camPos.x);
@@ -312,40 +307,26 @@ void display(void)
 	glUseProgram(snowprogram);
 	glUniform3fv(glGetUniformLocation(snowprogram, "cameraPos"), 1, &camPos.x);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
+	printError("GL display send camera and worldToView");
 
 
 	// Draw world
 	glUseProgram(program);
 	drawSkybox();
-	drawLake(lake_model, T(0, -GetHeight(&lake_texture, 0, 0), 0));
+	drawLake(lakeModel, T(0, -GetHeight(&lakeTexture, 0, 0), 0));
 	drawTerrain();
+	printError("GL display draw world");
 
-	
 
-
-	// Draw spheres
-	glUseProgram(program);
-	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 1);
-	glUseProgram(snowprogram);
-	glUniform1i(glGetUniformLocation(snowprogram, "drawing_objects"), 1);
-	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
-
-	glUseProgram(snowprogram);
-	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(0.05, 0.05, 0.05).m);
-	glUniform1i(glGetUniformLocation(snowprogram, "tex"), 4);
-	DrawModelInstanced(cube, snowprogram, "inPosition", NULL, "inTexCoord", 256*256);
-
-	glUseProgram(program);
-	glUniform1i(glGetUniformLocation(program, "drawing_objects"), 0);
-	glUseProgram(snowprogram);
-	glUniform1i(glGetUniformLocation(snowprogram, "drawing_objects"), 0);
-	glUseProgram(program);
-	glUniform1f(glGetUniformLocation(program, "time"), t);
+	// Draw snow, and send time and modelToWorld before
 	glUseProgram(snowprogram);
 	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
-	printError("display 2");
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(0.05, 0.05, 0.05).m);
+	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", 256*256);
+	printError("GL display draw snow");
 
 	glutSwapBuffers();
+	printError("GL display swap buffers");
 }
 
 void timer(int i)
@@ -411,7 +392,7 @@ void drawTerrain()
 	glUniformMatrix4fv(glGetUniformLocation(program, "modelToWorldMatrix"), 1, GL_TRUE, IdentityMatrix().m);
 	glUniform1i(glGetUniformLocation(program, "tex"), 0);
 	glUniform1i(glGetUniformLocation(program, "dirtTex"), 2);
-	DrawModel(tm, program, "inPosition", "inNormal", "inTexCoord"); // Draw terrain
+	DrawModel(terrainModel, program, "inPosition", "inNormal", "inTexCoord"); // Draw terrain
 }
 
 void handleKeyboardEvent()
@@ -425,7 +406,7 @@ void handleKeyboardEvent()
 		camLookAt = VectorAdd(camLookAt, stepDirection);
 		camPos = VectorAdd(camPos, stepDirection);
 		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&ttex, camPos.x, camPos.z) + 5;
+		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
@@ -437,7 +418,7 @@ void handleKeyboardEvent()
 		camLookAt = VectorSub(camLookAt, stepDirection);
 		camPos = VectorSub(camPos, stepDirection);
 		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&ttex, camPos.x, camPos.z) + 5;
+		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
@@ -449,7 +430,7 @@ void handleKeyboardEvent()
 		camLookAt = VectorAdd(camLookAt, stepDirection);
 		camPos = VectorAdd(camPos, stepDirection);
 		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&ttex, camPos.x, camPos.z) + 5;
+		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
@@ -461,7 +442,7 @@ void handleKeyboardEvent()
 		camLookAt = VectorSub(camLookAt, stepDirection);
 		camPos = VectorSub(camPos, stepDirection);
 		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&ttex, camPos.x, camPos.z) + 5;
+		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
