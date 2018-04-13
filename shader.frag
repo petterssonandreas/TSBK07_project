@@ -19,7 +19,7 @@ float directionalLight(vec3 lightDirection, float specularExponent, float useSpe
 
 void main(void)
 {
-    vec3 lightDir = vec3(1,1,1);
+    vec3 lightDir = vec3(-1,1,-1);
 
     if(drawing_lake_bottom == 1 && exSurface.y == 0)
     {

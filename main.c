@@ -200,12 +200,12 @@ void init(void)
 	printError("GL inits");
 
 	// Load models
-	skyModel = LoadModelPlus("skybox.obj");
+	skyModel = LoadModelPlus("skyboxsnow.obj");
 	cubeModel = LoadModelPlus("cube.obj");
 	printError("GL init load models");
 
 	// Load textures
-	LoadTGATextureSimple("SkyBox512.tga", &skyTex);
+	LoadTGATextureSimple("SnowWorld.tga", &skyTex);
 	LoadTGATextureSimple("grassplus.tga", &grassTex);
 	LoadTGATextureSimple("dirt.tga", &dirtTex);
 	LoadTGATextureSimple("snowflake.tga", &snowTex);
