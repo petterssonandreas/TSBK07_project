@@ -12,6 +12,10 @@
 #include <stdlib.h>
 #include <math.h>
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 void handleKeyboardEvent();
 void draw(Model* model, mat4 mdlMatrix);
 void drawLake(Model* model, mat4 mdlMatrix);
@@ -398,8 +402,15 @@ void drawTerrain()
 
 void handleKeyboardEvent()
 {
+#ifdef WIN32
+	if (glutKeyIsDown(27)) // ESC key
+	{
+		// Send exit message to windows
+		PostQuitMessage(0);
+	}
+#endif
 
-	if (glutKeyIsDown('w'))
+	if (glutKeyIsDown('w') || glutKeyIsDown('W'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		stepDirection.y = 0; // Set to zero to step in xz-plane
@@ -411,7 +422,7 @@ void handleKeyboardEvent()
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
-	if (glutKeyIsDown('s'))
+	if (glutKeyIsDown('s') || glutKeyIsDown('S'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		stepDirection.y = 0; // Set to zero to step in xz-plane
@@ -423,7 +434,7 @@ void handleKeyboardEvent()
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
-	if (glutKeyIsDown('d'))
+	if (glutKeyIsDown('d') || glutKeyIsDown('D'))
 	{
 		vec3 stepDirection = CrossProduct(VectorSub(camLookAt, camPos), camUp);
 		stepDirection.y = 0; // Set to zero to step in xz-plane
@@ -435,7 +446,7 @@ void handleKeyboardEvent()
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
-	if (glutKeyIsDown('a'))
+	if (glutKeyIsDown('a') || glutKeyIsDown('A'))
 	{
 		vec3 stepDirection = CrossProduct(VectorSub(camLookAt, camPos), camUp);
 		stepDirection.y = 0; // Set to zero to step in xz-plane
@@ -447,14 +458,14 @@ void handleKeyboardEvent()
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
-	if (glutKeyIsDown('q'))
+	if (glutKeyIsDown('q') || glutKeyIsDown('Q'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, 0.05)), stepDirection);
 		camLookAt = VectorAdd(camPos, camLookAt);
 	}
 
-	if (glutKeyIsDown('e'))
+	if (glutKeyIsDown('e') || glutKeyIsDown('E'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, -0.05)), stepDirection);
@@ -473,7 +484,7 @@ void handleKeyboardEvent()
 	camPos = VectorSub(camPos, Normalize(camUp));
 	}*/
 
-	if (glutKeyIsDown('t'))
+	if (glutKeyIsDown('t') || glutKeyIsDown('T'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		vec3 planarComp = CrossProduct(stepDirection, camUp);
@@ -484,7 +495,7 @@ void handleKeyboardEvent()
 		camUp = Normalize(CrossProduct(planarComp, VectorSub(camLookAt, camPos)));
 	}
 
-	if (glutKeyIsDown('g'))
+	if (glutKeyIsDown('g') || glutKeyIsDown('G'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		vec3 planarComp = CrossProduct(stepDirection, camUp);
