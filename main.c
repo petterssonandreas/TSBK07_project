@@ -12,7 +12,13 @@
 #include <stdlib.h>
 #include <math.h>
 
+
 #define no_particles 65536
+
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 
 void handleKeyboardEvent();
 void draw(Model* model, mat4 mdlMatrix);
@@ -33,17 +39,17 @@ GLfloat scaling_factor = 20.0;
 
 float GetHeight(TextureData *tex, float x, float z)
 {
-	int x_floored = floor(x);
-	int z_floored = floor(z);
-	int x_ceiled = ceil(x);
-	int z_ceiled = ceil(z);
+	int x_floored = (int) floor(x);
+	int z_floored = (int) floor(z);
+	int x_ceiled = (int) ceil(x);
+	int z_ceiled = (int) ceil(z);
 
 
 
 	float height = 0;
 
 
-	if ((x_floored >= 0 && x_ceiled < tex->width) && (z_floored >= 0 && z_ceiled < tex->height))
+	if ((x_floored >= 0 && x_ceiled < (int) tex->width) && (z_floored >= 0 && z_ceiled < (int) tex->height))
 	{
 		float x_floor_z_floor_height = tex->imageData[(x_floored + z_floored * tex->width) * (tex->bpp / 8)] / scaling_factor;
 		float x_floor_z_ceil_height = tex->imageData[(x_floored + z_ceiled * tex->width) * (tex->bpp / 8)] / scaling_factor;
@@ -80,9 +86,9 @@ Model* GenerateTerrain(TextureData *tex)
 {
 	int vertexCount = tex->width * tex->height;
 	int triangleCount = (tex->width - 1) * (tex->height - 1) * 2;
-	int x, z;
+	unsigned int x, z;
 
-	srand(time(NULL));
+	srand((unsigned int) time(NULL));
 
 	GLfloat *vertexArray = malloc(sizeof(GLfloat) * 3 * vertexCount);
 	GLfloat *normalArray = malloc(sizeof(GLfloat) * 3 * vertexCount);
@@ -94,9 +100,9 @@ Model* GenerateTerrain(TextureData *tex)
 		for (z = 0; z < tex->height; z++)
 		{
 			// Vertex array. You need to scale this properly
-			vertexArray[(x + z * tex->width) * 3 + 0] = x / 1.0;
+			vertexArray[(x + z * tex->width) * 3 + 0] = (GLfloat) x;
 			vertexArray[(x + z * tex->width) * 3 + 1] = tex->imageData[(x + z * tex->width) * (tex->bpp / 8)] / scaling_factor;
-			vertexArray[(x + z * tex->width) * 3 + 2] = z / 1.0;
+			vertexArray[(x + z * tex->width) * 3 + 2] = (GLfloat) z;
 			// Normal vectors. You need to calculate these.
 			GLfloat x_prev_intensity = 0;
 			GLfloat x_next_intensity = 0;
@@ -143,8 +149,8 @@ Model* GenerateTerrain(TextureData *tex)
 			normalArray[(x + z * tex->width) * 3 + 1] = normal.y;
 			normalArray[(x + z * tex->width) * 3 + 2] = normal.z;
 			// Texture coordinates. You may want to scale them.
-			texCoordArray[(x + z * tex->width) * 2 + 0] = x; // (float)x / tex->width;
-			texCoordArray[(x + z * tex->width) * 2 + 1] = z; // (float)z / tex->height;
+			texCoordArray[(x + z * tex->width) * 2 + 0] = (GLfloat) x;
+			texCoordArray[(x + z * tex->width) * 2 + 1] = (GLfloat) z;
 		}
 	for (x = 0; x < tex->width - 1; x++)
 		for (z = 0; z < tex->height - 1; z++)
@@ -230,7 +236,7 @@ void init(void)
 	printError("GL init load shader programs");
 
 	// Create and send projectionMatrix
-	mat4 projectionMatrix = frustum(-0.1, 0.1, -0.1, 0.1, 0.2, 1000.0);
+	mat4 projectionMatrix = frustum((float) -0.1, (float) 0.1, (float) -0.1, (float) 0.1, (float) 0.2, (float) 1000.0);
 	glUseProgram(program);
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	glUseProgram(snowprogram);
@@ -348,8 +354,10 @@ void display(void)
 	// Draw snow, and send time and modelToWorld before
 	glUseProgram(snowprogram);
 	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
-	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(0.05, 0.05, 0.05).m);
-	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", no_particles);
+	mat4 scaleMatrix = S((GLfloat) 0.05, (GLfloat) 0.05, (GLfloat) 0.05);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, scaleMatrix.m);
+	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", 256*256);
+
 	printError("GL display draw snow");
 
 	glutSwapBuffers();
@@ -407,7 +415,7 @@ void drawSkybox()
 {
 	glDisable(GL_DEPTH_TEST);
 	glUniform1i(glGetUniformLocation(program, "drawing_skyBox"), 1);
-	glUniformMatrix4fv(glGetUniformLocation(program, "modelToWorldMatrix"), 1, GL_TRUE, T(camPos.x, camPos.y - 0.2, camPos.z).m);
+	glUniformMatrix4fv(glGetUniformLocation(program, "modelToWorldMatrix"), 1, GL_TRUE, T((GLfloat) camPos.x, (GLfloat) (camPos.y - 0.2), (GLfloat) camPos.z).m);
 	glUniform1i(glGetUniformLocation(program, "tex"), 1);
 	DrawModel(skyModel, program, "inPosition", "inNormal", "inTexCoord");
 	glUniform1i(glGetUniformLocation(program, "drawing_skyBox"), 0);
@@ -424,8 +432,15 @@ void drawTerrain()
 
 void handleKeyboardEvent()
 {
+#ifdef WIN32
+	if (glutKeyIsDown(27)) // ESC key
+	{
+		// Send exit message to windows
+		PostQuitMessage(0);
+	}
+#endif
 
-	if (glutKeyIsDown('w'))
+	if (glutKeyIsDown('w') || glutKeyIsDown('W'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		stepDirection.y = 0; // Set to zero to step in xz-plane
@@ -437,7 +452,7 @@ void handleKeyboardEvent()
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
-	if (glutKeyIsDown('s'))
+	if (glutKeyIsDown('s') || glutKeyIsDown('S'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		stepDirection.y = 0; // Set to zero to step in xz-plane
@@ -449,7 +464,7 @@ void handleKeyboardEvent()
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
-	if (glutKeyIsDown('d'))
+	if (glutKeyIsDown('d') || glutKeyIsDown('D'))
 	{
 		vec3 stepDirection = CrossProduct(VectorSub(camLookAt, camPos), camUp);
 		stepDirection.y = 0; // Set to zero to step in xz-plane
@@ -461,7 +476,7 @@ void handleKeyboardEvent()
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
-	if (glutKeyIsDown('a'))
+	if (glutKeyIsDown('a') || glutKeyIsDown('A'))
 	{
 		vec3 stepDirection = CrossProduct(VectorSub(camLookAt, camPos), camUp);
 		stepDirection.y = 0; // Set to zero to step in xz-plane
@@ -473,17 +488,17 @@ void handleKeyboardEvent()
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
-	if (glutKeyIsDown('q'))
+	if (glutKeyIsDown('q') || glutKeyIsDown('Q'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
-		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, 0.05)), stepDirection);
+		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, (GLfloat) 0.05)), stepDirection);
 		camLookAt = VectorAdd(camPos, camLookAt);
 	}
 
-	if (glutKeyIsDown('e'))
+	if (glutKeyIsDown('e') || glutKeyIsDown('E'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
-		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, -0.05)), stepDirection);
+		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, (GLfloat) -0.05)), stepDirection);
 		camLookAt = VectorAdd(camPos, camLookAt);
 	}
 
@@ -499,23 +514,23 @@ void handleKeyboardEvent()
 	camPos = VectorSub(camPos, Normalize(camUp));
 	}*/
 
-	if (glutKeyIsDown('t'))
+	if (glutKeyIsDown('t') || glutKeyIsDown('T'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		vec3 planarComp = CrossProduct(stepDirection, camUp);
 
-		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, 0.05)), stepDirection);
+		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, (GLfloat) 0.05)), stepDirection);
 		camLookAt = VectorAdd(camPos, camLookAt);
 
 		camUp = Normalize(CrossProduct(planarComp, VectorSub(camLookAt, camPos)));
 	}
 
-	if (glutKeyIsDown('g'))
+	if (glutKeyIsDown('g') || glutKeyIsDown('G'))
 	{
 		vec3 stepDirection = VectorSub(camLookAt, camPos);
 		vec3 planarComp = CrossProduct(stepDirection, camUp);
 
-		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, -0.05)), stepDirection);
+		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, (GLfloat) -0.05)), stepDirection);
 		camLookAt = VectorAdd(camPos, camLookAt);
 
 		camUp = Normalize(CrossProduct(planarComp, VectorSub(camLookAt, camPos)));
