@@ -1,5 +1,6 @@
 #version 450
 #define M_PI 3.1415926535897932384626433832795
+#define no_particles 65536
 
 in  vec3 inPosition;
 in  vec3 inNormal;
@@ -7,8 +8,10 @@ in vec2 inTexCoord;
 
  layout(std430, binding = 3) buffer layoutName
  {
-    vec3 data_SSBO[];
+    int snow[no_particles];
+    vec3 data_SSBO[no_particles];
  };
+// uniform layout(binding = 4, rgba8ui) uimage2D snowTexture;
 
 
 out vec2 texCoord;
@@ -30,6 +33,8 @@ void main(void)
 	mat3 normalMatrix = mat3(modelToWorldMatrix);
 	texCoord = inTexCoord;
   exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
+
+ // ivec2 i = vec2(gl_VertexID % 256, gl_VertexID / 256);
 
   //Restart the snowflake in z-coord
   if (data_SSBO[gl_InstanceID].z == 0)
@@ -80,8 +85,9 @@ void main(void)
   //Prevent the snowflakes from falling through the ground
   if (height < ground_height)
   {
-  	height = ground_height;
+  	height = ground_height + snow[12];
     data_SSBO[gl_InstanceID].y += 50;
+    snow[int(data_SSBO[gl_InstanceID].x*256 + data_SSBO[gl_InstanceID].z)] = 1;
   }
 
 	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 

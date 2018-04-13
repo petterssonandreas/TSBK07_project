@@ -1,10 +1,18 @@
 #version 150
+#define no_particles 65536
 
 out vec4 outColor;
 
 in vec2 texCoord;
 in vec3 normal;
 in vec3 exSurface;
+in float Color;
+
+ layout(std430, binding = 3) buffer layoutName
+ {
+    int snow[no_particles];
+    vec3 data_SSBO[no_particles];
+ };
 
 uniform vec3 cameraPos;
 uniform sampler2D tex;
@@ -47,10 +55,18 @@ void main(void)
     }
     else
     {
-        float shade = directionalLight(lightDir, 0.0, 0.0);
-        outColor = vec4(vec3(2 * shade), 1.0)  * 0.5 *
-            (((1 - abs(normal.x)) * texture(tex, texCoord) + abs(normal.x) * texture(dirtTex, texCoord)) +
-            ((1 - abs(normal.z)) * texture(tex, texCoord) + abs(normal.z) * texture(dirtTex, texCoord)));
+        outColor = vec4(Color,Color,Color,1);
+        // if (0)//snow[int(exSurface.x*256 + exSurface.z)] == 1)
+        // {
+        //     outColor = vec4(1,1,1,1);
+        // }
+        // else
+        // { 
+        //     float shade = directionalLight(lightDir, 0.0, 0.0);
+        //     outColor = vec4(vec3(2 * shade), 1.0)  * 0.5 *
+        //         (((1 - abs(normal.x)) * texture(tex, texCoord) + abs(normal.x) * texture(dirtTex, texCoord)) +
+        //         ((1 - abs(normal.z)) * texture(tex, texCoord) + abs(normal.z) * texture(dirtTex, texCoord)));
+        // }
     }
 }
 

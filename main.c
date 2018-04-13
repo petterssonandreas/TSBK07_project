@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define no_particles 65536
+
 void handleKeyboardEvent();
 void draw(Model* model, mat4 mdlMatrix);
 void drawLake(Model* model, mat4 mdlMatrix);
@@ -25,6 +27,8 @@ vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
 vec3 camUp = { 0.0f, 1.0f, 0.0f };
 
 GLfloat scaling_factor = 20.0;
+
+
 
 
 float GetHeight(TextureData *tex, float x, float z)
@@ -186,6 +190,7 @@ GLuint skyTex;
 GLuint dirtTex;
 GLuint snowTex;
 GLuint heightTex;
+//GLuint snowTexture;
 
 
 void init(void)
@@ -198,6 +203,13 @@ void init(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	printError("GL inits");
+
+	// Snow texture
+	//glGenTextures(1, &snowTexture);
+	//glBindTexture(GL_TEXTURE_2D, snowTexture);
+	//glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8UI, 256, 256);
+	//glBindTexture(GL_TEXTURE_2D, 5);
+
 
 	// Load models
 	skyModel = LoadModelPlus("./res/skyboxsnow.obj");
@@ -234,18 +246,28 @@ void init(void)
 	printError("GL init load terrain and lake");
 
 	GLuint ssbo = 0;
-	vec3 data_SSBO[256*256];
-
-	for (int i = 1; i < 256 * 256; i++)
+	
+	static struct ssbo_data_t
 	{
-		data_SSBO[i].x = 0;
-		data_SSBO[i].y = 0;
-		data_SSBO[i].z = 0;
+		GLuint snow[no_particles];
+		vec3 position[no_particles];
+	} ssbo_data;
+
+	for (int j = 1; j < no_particles; j++)
+	{
+		ssbo_data.snow[j] = j;
+	}
+	for (int i = 1; i < no_particles; i++)
+	{
+		//ssbo_data.snow[i] = 0;
+		ssbo_data.position[i].x = 0;
+		ssbo_data.position[i].y = 0;
+		ssbo_data.position[i].z = 0;
 	}
 	glGenBuffers(1, &ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(vec3)*256*256, NULL, GL_DYNAMIC_COPY);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(data_SSBO), data_SSBO);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(vec3)*no_particles), NULL, GL_DYNAMIC_COPY);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(ssbo_data), &ssbo_data);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	printError("GL init create and send buffer for GPU storage");
@@ -299,6 +321,10 @@ void display(void)
 		firstCall = false;
 	}
 
+	// Snow height
+	//glDepthMask(false);
+	//glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	//glBindImageTexture(4, snowTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8UI);
 
 	// Build and send worldToView and camPos
 	mat4 worldToView = lookAtv(camPos, camLookAt, camUp);
@@ -323,7 +349,7 @@ void display(void)
 	glUseProgram(snowprogram);
 	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, S(0.05, 0.05, 0.05).m);
-	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", 256*256);
+	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", no_particles);
 	printError("GL display draw snow");
 
 	glutSwapBuffers();
