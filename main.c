@@ -200,16 +200,16 @@ void init(void)
 	printError("GL inits");
 
 	// Load models
-	skyModel = LoadModelPlus("skyboxsnow.obj");
-	cubeModel = LoadModelPlus("cube.obj");
+	skyModel = LoadModelPlus("./res/skyboxsnow.obj");
+	cubeModel = LoadModelPlus("./res/cube.obj");
 	printError("GL init load models");
 
 	// Load textures
-	LoadTGATextureSimple("SnowWorld.tga", &skyTex);
-	LoadTGATextureSimple("grassplus.tga", &grassTex);
-	LoadTGATextureSimple("dirt.tga", &dirtTex);
-	LoadTGATextureSimple("snowflake.tga", &snowTex);
-	LoadTGATextureSimple("fft-terrain.tga", &heightTex);
+	LoadTGATextureSimple("./res/SnowWorld.tga", &skyTex);
+	LoadTGATextureSimple("./res/grassplus.tga", &grassTex);
+	LoadTGATextureSimple("./res/dirt.tga", &dirtTex);
+	LoadTGATextureSimple("./res/snowflake.tga", &snowTex);
+	LoadTGATextureSimple("./res/fft-terrain.tga", &heightTex);
 	printError("GL init load textures");
 
 	// Load and compile shader
@@ -226,10 +226,10 @@ void init(void)
 	printError("GL init create and send projectionMatrix");
 
 	// Load terrain data
-	LoadTGATextureData("fft-terrain.tga", &terrainTexture);
+	LoadTGATextureData("./res/fft-terrain.tga", &terrainTexture);
 	terrainModel = GenerateTerrain(&terrainTexture);
 	// Load lake
-	LoadTGATextureData("lake_bottom.tga", &lakeTexture);
+	LoadTGATextureData("./res/lake_bottom.tga", &lakeTexture);
 	lakeModel = GenerateTerrain(&lakeTexture);
 	printError("GL init load terrain and lake");
 
