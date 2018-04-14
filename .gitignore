@@ -3,6 +3,7 @@
 
 # Error log from run
 ErrorLog.txt
+StdOut.txt
 
 # User-specific files
 *.suo
