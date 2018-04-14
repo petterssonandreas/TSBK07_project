@@ -14,6 +14,8 @@
 
 
 #define no_particles 65536
+#define WIN_X_SIZE 700
+#define WIN_Y_SIZE 700
 
 #ifdef WIN32
 #include <windows.h>
@@ -370,9 +372,29 @@ void timer(int i)
 	glutPostRedisplay();
 }
 
-void mouse(int x, int y)
+
+
+void mouseMoved(int x, int y)
 {
-	printf("%d %d\n", x, y);
+	int xDiff = (WIN_X_SIZE / 2) - x;
+	int yDiff = (WIN_Y_SIZE / 2) - y;
+
+	GLfloat xAngle = (GLfloat) (xDiff / 600.0);
+	GLfloat yAngle = (GLfloat) (yDiff / 600.0);
+
+	// Look left, right
+	vec3 stepDirection = VectorSub(camLookAt, camPos);
+	camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, xAngle)), stepDirection);
+	camLookAt = VectorAdd(camPos, camLookAt);
+
+	// Look up, down
+	stepDirection = VectorSub(camLookAt, camPos);
+	vec3 planarComp = CrossProduct(stepDirection, camUp);
+	camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, yAngle)), stepDirection);
+	camLookAt = VectorAdd(camPos, camLookAt);
+
+	// Move cursor to center of window
+	glutWarpPointer(WIN_X_SIZE / 2, WIN_Y_SIZE / 2);
 }
 
 
@@ -381,13 +403,14 @@ int main(int argc, char *argv[])
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitContextVersion(3, 2);
-	glutInitWindowSize(700, 700);
+	glutInitWindowSize(WIN_X_SIZE, WIN_Y_SIZE);
 	glutCreateWindow ("TSBK07 Project");
 #ifdef WIN32
 	glewInit();
 #endif
-	glutDisplayFunc(display); 
-	glutPassiveMotionFunc(mouse);
+	glutDisplayFunc(display);
+	glutPassiveMotionFunc(mouseMoved);
+	glutHideCursor();
 	glutRepeatingTimer(20);
 	init();
 	glutMainLoop();
