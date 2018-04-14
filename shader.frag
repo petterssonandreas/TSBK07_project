@@ -1,4 +1,4 @@
-#version 150
+#version 450
 #define no_particles 65536
 
 out vec4 outColor;

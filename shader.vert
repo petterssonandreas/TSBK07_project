@@ -1,4 +1,4 @@
-#version 150
+#version 450
 #define no_particles 65536
 
 
@@ -30,6 +30,10 @@ void main(void)
     if (snow[int(exSurface.x*256 + exSurface.z)] == 1)
     {
     	Color = 1.0;
+    }
+    else
+    {
+        Color = 0.0;
     }
 	gl_Position = projMatrix * worldToViewMatrix* modelToWorldMatrix * vec4(inPosition, 1.0);
 }
