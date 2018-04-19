@@ -11,7 +11,7 @@ in vec2 inTexCoord;
 
  layout(std430, binding = 3) buffer layoutName
  {
-    int snow[no_particles*100];
+    int snow[no_particles*10];
     vec3 data_SSBO[no_particles];
  };
 

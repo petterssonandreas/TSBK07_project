@@ -64,8 +64,10 @@ void main(void)
                          ((1 - abs(normal.z)) * texture(tex, texCoord) + 
                             abs(normal.z) * texture(dirtTex, texCoord))); 
 
+        vec4 snow = texture(snowTex, texCoord);
+
         outColor = (1 - Color/snowFactor) * grassdirt * vec4(vec3(2 * shade), 1.0)  * 0.5 + 
-                        (Color/snowFactor) * vec4(vec3(2 * shade),1.0);
+                        (Color/snowFactor) * snow * vec4(vec3(1.5 * shade),1.0);
     }
 }
 
