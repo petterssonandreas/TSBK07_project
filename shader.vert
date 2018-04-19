@@ -27,13 +27,13 @@ void main(void)
     normal = normalMatrix * inNormal;
 	texCoord = inTexCoord;
     exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
-    if (snow[int(exSurface.x*256 + exSurface.z)] == 1)
-    {
-    	Color = 1.0;
-    }
-    else
-    {
-        Color = 0.0;
-    }
+    Color = snow[int(exSurface.x)*256 + int(exSurface.z)];// == 1)
+    //{
+    //	Color = 1.0;
+    //}
+    //else
+    //{
+     //   Color = 0.0;
+    //}
 	gl_Position = projMatrix * worldToViewMatrix* modelToWorldMatrix * vec4(inPosition, 1.0);
 }

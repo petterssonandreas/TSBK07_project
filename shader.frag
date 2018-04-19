@@ -55,10 +55,16 @@ void main(void)
     else
     {
         float shade = directionalLight(lightDir, 0.0, 0.0);
-        outColor = vec4(vec3(2 * shade), 1.0)  * 0.5 *
-                 (((1 - abs(normal.x)) * texture(tex, texCoord) + abs(normal.x) * texture(dirtTex, texCoord)) +
-                 ((1 - abs(normal.z)) * texture(tex, texCoord) + abs(normal.z) * texture(dirtTex, texCoord))) + 
-                 vec4(Color, Color, Color, 1);
+        vec4 grassdirt = (((1 - abs(normal.x)) * texture(tex, texCoord) + 
+                            abs(normal.x) * texture(dirtTex, texCoord)) +  
+                         ((1 - abs(normal.z)) * texture(tex, texCoord) + 
+                            abs(normal.z) * texture(dirtTex, texCoord))); 
+
+        float snowFactor = 10.0;
+
+        outColor = (1 - Color/snowFactor) * grassdirt * vec4(vec3(2 * shade), 1.0)  * 0.5 + 
+                        (Color/snowFactor) * vec4(vec3(2 * shade),1.0);
+                 
         // outColor = vec4(Color,Color,Color,1);
         // if (0)//snow[int(exSurface.x*256 + exSurface.z)] == 1)
         // {
