@@ -94,7 +94,8 @@ void main(void)
     data_SSBO[gl_InstanceID].y += 50;
     data_SSBO[gl_InstanceID].x = 0;
     data_SSBO[gl_InstanceID].z = 0;
-    snow[int(10*x_coord*size_of_world + 10*z_coord)] = 1;
+    if (snow[int(x_coord)*int(size_of_world) + int(z_coord)] < 10)
+      snow[int(x_coord)*int(size_of_world) + int(z_coord)] += 1;
   }
 
 	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 

@@ -363,7 +363,7 @@ void display(void)
 	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
 	mat4 scaleMatrix = S((GLfloat) 0.05, (GLfloat) 0.05, (GLfloat) 0.05);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, scaleMatrix.m);
-	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", 256*256);
+	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", no_particles);
 
 	printError("GL display draw snow");
 
