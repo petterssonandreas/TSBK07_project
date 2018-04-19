@@ -227,7 +227,7 @@ void init(void)
 	printError("GL init load models");
 
 	// Load textures
-	LoadTGATextureSimple("./res/SnowWorld.tga", &skyTex);
+	LoadTGATextureSimple("./res/cloudysunset.tga", &skyTex);
 	LoadTGATextureSimple("./res/grassplus.tga", &grassTex);
 	LoadTGATextureSimple("./res/dirt.tga", &dirtTex);
 	LoadTGATextureSimple("./res/snowflake.tga", &snowTex);
