@@ -7,7 +7,7 @@ in vec2 texCoord;
 //in vec3 normal;
 in vec3 exSurface;
 
-uniform sampler2D tex;
+uniform sampler2D snowflakeTex;
 
 void main(void)
 {

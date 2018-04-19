@@ -198,7 +198,7 @@ GLuint skyTex;
 GLuint dirtTex;
 GLuint snowTex;
 GLuint heightTex;
-//GLuint snowTexture;
+GLuint snowflakeTex;
 
 int simulationSpeed;
 
@@ -230,7 +230,8 @@ void init(void)
 	LoadTGATextureSimple("./res/cloudysunset.tga", &skyTex);
 	LoadTGATextureSimple("./res/grassplus.tga", &grassTex);
 	LoadTGATextureSimple("./res/dirt.tga", &dirtTex);
-	LoadTGATextureSimple("./res/snowflake.tga", &snowTex);
+	LoadTGATextureSimple("./res/snowTexture.tga", &snowTex);
+	LoadTGATextureSimple("./res/snowflake.tga", &snowflakeTex);
 	LoadTGATextureSimple("./res/fft-terrain.tga", &heightTex);
 	printError("GL init load textures");
 
@@ -297,6 +298,8 @@ void init(void)
 	glBindTexture(GL_TEXTURE_2D, heightTex);
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, snowTex);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, snowflakeTex);
 	printError("GL init bind textures");
 
 
@@ -304,8 +307,12 @@ void init(void)
 
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
-	glUniform1i(glGetUniformLocation(snowprogram, "tex"), 4);
+	glUniform1i(glGetUniformLocation(snowprogram, "snowflakeTex"), 5);
 	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
+
+	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "snowTex"), 4);
+
 	printError("GL init send texture unit numbers to shader");
 }
 
