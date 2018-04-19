@@ -200,6 +200,8 @@ GLuint snowTex;
 GLuint heightTex;
 //GLuint snowTexture;
 
+int simulationSpeed;
+
 
 void init(void)
 {
@@ -298,9 +300,12 @@ void init(void)
 	printError("GL init bind textures");
 
 
+	simulationSpeed = 100;
+
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
 	glUniform1i(glGetUniformLocation(snowprogram, "tex"), 4);
+	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
 	printError("GL init send texture unit numbers to shader");
 }
 
@@ -397,6 +402,32 @@ void mouseMoved(int x, int y)
 	glutWarpPointer(WIN_X_SIZE / 2, WIN_Y_SIZE / 2);
 }
 
+#define MAX_SIM_SPEED 100000
+#define MIN_SIM_SPEED 1
+
+void keyReleased(unsigned char key, int x, int y)
+{
+	if (key == '+')
+	{
+		simulationSpeed *= 2;
+		if (simulationSpeed > MAX_SIM_SPEED)
+		{
+			simulationSpeed = MAX_SIM_SPEED;
+		}
+	}
+	else if (key == '-')
+	{
+		simulationSpeed /= 2;
+		if (simulationSpeed < MIN_SIM_SPEED)
+		{
+			simulationSpeed = MIN_SIM_SPEED;
+		}
+	}
+
+	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
+	printf("simulationSpeed: %d\n", simulationSpeed);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -410,6 +441,7 @@ int main(int argc, char *argv[])
 #endif
 	glutDisplayFunc(display);
 	glutPassiveMotionFunc(mouseMoved);
+	glutKeyboardUpFunc(keyReleased);
 	glutHideCursor();
 	glutRepeatingTimer(20);
 	init();

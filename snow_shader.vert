@@ -25,6 +25,7 @@ uniform mat4 worldToViewMatrix;
 uniform mat4 modelToWorldMatrix;
 uniform float time;
 uniform float time_0;
+uniform int simulationSpeed;
 
 float snoise(vec2 v);
  
@@ -76,7 +77,7 @@ void main(void)
     data_SSBO[gl_InstanceID].y=  200 * snoise(vec2(gl_InstanceID*2,time/10000000));
   }
 
-  data_SSBO[gl_InstanceID].y -= 0.01;
+  data_SSBO[gl_InstanceID].y -= 0.0001 * simulationSpeed;
   float height = float(data_SSBO[gl_InstanceID].y);
 	
   //Calculate the ground height at this vertex
