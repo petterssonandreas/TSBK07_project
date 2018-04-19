@@ -3,6 +3,7 @@
 #define no_particles 65536
 #define scaling_factor 20.0
 #define size_of_world 256.0
+#define snowFactor 10.0
 
 in vec3 inPosition;
 in vec3 inNormal;
@@ -13,13 +14,9 @@ in vec2 inTexCoord;
     int snow[no_particles*100];
     vec3 data_SSBO[no_particles];
  };
-// uniform layout(binding = 4, rgba8ui) uimage2D snowTexture;
-
 
 out vec2 texCoord;
-//out vec3 normal;
 out vec3 exSurface;
-//out int InstanceID;
 
 uniform sampler2D heightTex;
 uniform mat4 projMatrix;
@@ -36,8 +33,6 @@ void main(void)
 	mat3 normalMatrix = mat3(modelToWorldMatrix);
 	texCoord = inTexCoord;
   exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
-
- // ivec2 i = vec2(gl_VertexID % 256, gl_VertexID / 256);
 
   //Restart the snowflake in z-coord
   if (data_SSBO[gl_InstanceID].z == 0)
@@ -91,10 +86,14 @@ void main(void)
   if (height < ground_height)
   {
   	height = ground_height;
+
+    //Use the value zero as flag to redistribute the snowflakes
     data_SSBO[gl_InstanceID].y += 50;
     data_SSBO[gl_InstanceID].x = 0;
     data_SSBO[gl_InstanceID].z = 0;
-    if (snow[int(x_coord)*int(size_of_world) + int(z_coord)] < 10)
+
+    //Accumulated sum of snow that has fallen here
+    if (snow[int(x_coord)*int(size_of_world) + int(z_coord)] < snowFactor)
       snow[int(x_coord)*int(size_of_world) + int(z_coord)] += 1;
   }
 
