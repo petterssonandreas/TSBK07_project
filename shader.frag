@@ -11,6 +11,7 @@ in float Color;
 uniform vec3 cameraPos;
 uniform sampler2D tex;
 uniform sampler2D dirtTex;
+uniform sampler2D snowTex;
 uniform int drawing_lake_bottom;
 uniform int drawing_skyBox;
 uniform int drawing_objects;
