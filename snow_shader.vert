@@ -1,14 +1,16 @@
 #version 450
 #define M_PI 3.1415926535897932384626433832795
 #define no_particles 65536
+#define scaling_factor 20.0
+#define size_of_world 256.0
 
-in  vec3 inPosition;
-in  vec3 inNormal;
+in vec3 inPosition;
+in vec3 inNormal;
 in vec2 inTexCoord;
 
  layout(std430, binding = 3) buffer layoutName
  {
-    int snow[no_particles];
+    int snow[no_particles*100];
     vec3 data_SSBO[no_particles];
  };
 // uniform layout(binding = 4, rgba8ui) uimage2D snowTexture;
@@ -39,36 +41,38 @@ void main(void)
   //Restart the snowflake in z-coord
   if (data_SSBO[gl_InstanceID].z == 0)
   {
-  	float z_coord = 256 * snoise(vec2(gl_InstanceID,2));
-  	while (z_coord > 256.0)
+  	float z_coord = size_of_world * snoise(vec2(gl_InstanceID,time/10000));
+  	while (z_coord > size_of_world)
   	{
-  		z_coord = z_coord - 256.0;
+  		z_coord = z_coord - size_of_world;
   	}
   	while (z_coord < 0.0)
   	{
-  		z_coord = z_coord + 256.0;
+  		z_coord = z_coord + size_of_world;
   	}
     data_SSBO[gl_InstanceID].z = z_coord;
   }
+  float z_coord = data_SSBO[gl_InstanceID].z;
 
   //Restart the snowflake in x-coord
   if (data_SSBO[gl_InstanceID].x == 0)
   {
-  	float x_coord = 256 * snoise(vec2(3,gl_InstanceID));
-  	while (x_coord > 256.0)
+  	float x_coord = size_of_world * snoise(vec2(time/10000,gl_InstanceID));
+  	while (x_coord > size_of_world)
   	{
-  		x_coord = x_coord - 256.0;
+  		x_coord = x_coord - size_of_world;
   	}
   	while (x_coord < 0.0)
   	{
-  		x_coord = x_coord + 256.0;
+  		x_coord = x_coord + size_of_world;
   	}
     data_SSBO[gl_InstanceID].x = x_coord;
   }
+  float x_coord = data_SSBO[gl_InstanceID].x;
 
   //Calculate the tex coord of the vertex to check the height
-	float z_tex_coord = data_SSBO[gl_InstanceID].z/256.0;
-	float x_tex_coord = data_SSBO[gl_InstanceID].x/256.0;
+	float z_tex_coord = data_SSBO[gl_InstanceID].z/size_of_world;
+	float x_tex_coord = data_SSBO[gl_InstanceID].x/size_of_world;
 
   //If the starting height has not been called, calculate
   if (data_SSBO[gl_InstanceID].y == 0)
@@ -80,18 +84,20 @@ void main(void)
   float height = float(data_SSBO[gl_InstanceID].y);
 	
   //Calculate the ground height at this vertex
-	float ground_height = texture(heightTex, vec2(x_tex_coord, z_tex_coord)).x * 256.0/ 20.0;
+	float ground_height = texture(heightTex, vec2(x_tex_coord, z_tex_coord)).x * size_of_world/ scaling_factor;
 
   //Prevent the snowflakes from falling through the ground
   if (height < ground_height)
   {
-  	height = ground_height + snow[12];
+  	height = ground_height;
     data_SSBO[gl_InstanceID].y += 50;
-    snow[int(data_SSBO[gl_InstanceID].x*256 + data_SSBO[gl_InstanceID].z)] = 1;
+    data_SSBO[gl_InstanceID].x = 0;
+    data_SSBO[gl_InstanceID].z = 0;
+    snow[int(10*x_coord*size_of_world + 10*z_coord)] = 1;
   }
 
 	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 
-		+ vec4(data_SSBO[gl_InstanceID].x, height, data_SSBO[gl_InstanceID].z, 0));
+		+ vec4(x_coord, height, z_coord, 0));
 }
 
 

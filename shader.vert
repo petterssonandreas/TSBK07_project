@@ -12,7 +12,7 @@ out float Color;
 
  layout(std430, binding = 3) buffer layoutName
  {
-    int snow[no_particles];
+    int snow[no_particles*100];
     vec3 data_SSBO[no_particles];
  };
 
