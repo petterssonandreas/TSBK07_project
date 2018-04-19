@@ -30,23 +30,25 @@ void drawTerrain();
 void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char* normalVariableName, char* texCoordVariableName, int count);
 
 
-vec3 camPos = { 10.0f, 0.0f, 0.0f };
+const float cameraHeight = 5.0;
+vec3 camPos = { 10.0f, 20.0f, 0.0f };
 vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
 vec3 camUp = { 0.0f, 1.0f, 0.0f };
 
-GLfloat scaling_factor = 20.0;
+GLfloat scaling_factor = 40.0;
 
 
 
 
 float GetHeight(TextureData *tex, float x, float z)
 {
+	x = 2*x;
+	z = 2*z;
+
 	int x_floored = (int) floor(x);
 	int z_floored = (int) floor(z);
 	int x_ceiled = (int) ceil(x);
 	int z_ceiled = (int) ceil(z);
-
-
 
 	float height = 0;
 
@@ -102,9 +104,9 @@ Model* GenerateTerrain(TextureData *tex)
 		for (z = 0; z < tex->height; z++)
 		{
 			// Vertex array. You need to scale this properly
-			vertexArray[(x + z * tex->width) * 3 + 0] = (GLfloat) x;
+			vertexArray[(x + z * tex->width) * 3 + 0] = (GLfloat) x/2;
 			vertexArray[(x + z * tex->width) * 3 + 1] = tex->imageData[(x + z * tex->width) * (tex->bpp / 8)] / scaling_factor;
-			vertexArray[(x + z * tex->width) * 3 + 2] = (GLfloat) z;
+			vertexArray[(x + z * tex->width) * 3 + 2] = (GLfloat) z/2;
 			// Normal vectors. You need to calculate these.
 			GLfloat x_prev_intensity = 0;
 			GLfloat x_next_intensity = 0;
@@ -260,11 +262,11 @@ void init(void)
 	
 	static struct ssbo_data_t
 	{
-		GLuint snow[no_particles*10];
+		GLuint snow[no_particles*100];
 		vec3 position[no_particles];
 	} ssbo_data;
 
-	for (int j = 1; j < no_particles*10; j++)
+	for (int j = 1; j < no_particles*100; j++)
 	{
 		ssbo_data.snow[j] = 0;
 	}
@@ -510,7 +512,7 @@ void handleKeyboardEvent()
 		camLookAt = VectorAdd(camLookAt, stepDirection);
 		camPos = VectorAdd(camPos, stepDirection);
 		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
+		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
@@ -522,7 +524,7 @@ void handleKeyboardEvent()
 		camLookAt = VectorSub(camLookAt, stepDirection);
 		camPos = VectorSub(camPos, stepDirection);
 		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
+		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
@@ -534,7 +536,7 @@ void handleKeyboardEvent()
 		camLookAt = VectorAdd(camLookAt, stepDirection);
 		camPos = VectorAdd(camPos, stepDirection);
 		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
+		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
@@ -546,7 +548,7 @@ void handleKeyboardEvent()
 		camLookAt = VectorSub(camLookAt, stepDirection);
 		camPos = VectorSub(camPos, stepDirection);
 		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
+		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
 		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
 	}
 
