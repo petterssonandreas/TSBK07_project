@@ -11,7 +11,7 @@ in vec2 inTexCoord;
 
  layout(std430, binding = 3) buffer layoutName
  {
-    int snow[no_particles*100];
+    int snow[512*512];
     vec3 data_SSBO[no_particles];
  };
 
@@ -37,7 +37,7 @@ void main(void)
   //Restart the snowflake in z-coord
   if (data_SSBO[gl_InstanceID].z == 0)
   {
-  	float z_coord = 232.12;//size_of_world * snoise(vec2(gl_InstanceID,time/10000));
+  	float z_coord = size_of_world * snoise(vec2(gl_InstanceID,time/10000));
   	while (z_coord > size_of_world)
   	{
   		z_coord = z_coord - size_of_world;
@@ -53,7 +53,7 @@ void main(void)
   //Restart the snowflake in x-coord
   if (data_SSBO[gl_InstanceID].x == 0)
   {
-  	float x_coord = 75.123; //size_of_world * snoise(vec2(time/10000,gl_InstanceID));
+  	float x_coord = size_of_world * snoise(vec2(time/10000,gl_InstanceID));
   	while (x_coord > size_of_world)
   	{
   		x_coord = x_coord - size_of_world;

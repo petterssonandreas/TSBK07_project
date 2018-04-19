@@ -262,11 +262,11 @@ void init(void)
 	
 	static struct ssbo_data_t
 	{
-		GLuint snow[no_particles*100];
+		GLuint snow[512*512];
 		vec3 position[no_particles];
 	} ssbo_data;
 
-	for (int j = 1; j < no_particles*100; j++)
+	for (int j = 1; j < 512*512; j++)
 	{
 		ssbo_data.snow[j] = 0;
 	}
