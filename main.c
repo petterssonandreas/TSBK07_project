@@ -35,7 +35,7 @@ vec3 camPos = { 10.0f, 20.0f, 0.0f };
 vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
 vec3 camUp = { 0.0f, 1.0f, 0.0f };
 
-GLfloat scaling_factor = 40.0;
+GLfloat scaling_factor = 20.0;
 
 
 
@@ -262,11 +262,11 @@ void init(void)
 	
 	static struct ssbo_data_t
 	{
-		GLuint snow[no_particles*100];
+		GLuint snow[5*256*5*256];
 		vec3 position[no_particles];
 	} ssbo_data;
 
-	for (int j = 1; j < no_particles*100; j++)
+	for (int j = 1; j < 5*256*5*256; j++)
 	{
 		ssbo_data.snow[j] = 0;
 	}

@@ -27,7 +27,7 @@ void main(void)
     normal = normalMatrix * inNormal;
 	texCoord = inTexCoord;
     exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
-    Color = snow[int(2*exSurface.x)*256 + int(2*exSurface.z)];// == 1)
+    Color = snow[2*int(exSurface.x)*256 + 2*int(exSurface.z)];// == 1)
     //{
     //	Color = 1.0;
     //}
