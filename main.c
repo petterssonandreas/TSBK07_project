@@ -28,6 +28,7 @@ void drawLake(Model* model, mat4 mdlMatrix);
 void drawSkybox();
 void drawTerrain();
 void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char* normalVariableName, char* texCoordVariableName, int count);
+vec3 VectorReverse(vec3 a);
 
 
 const float cameraHeight = 5.0;
@@ -243,12 +244,53 @@ void init(void)
 	printError("GL init load shader programs");
 
 	// Create and send projectionMatrix
-	mat4 projectionMatrix = frustum((float) -0.1, (float) 0.1, (float) -0.1, (float) 0.1, (float) 0.2, (float) 1000.0);
+	float left = -0.1f;
+	float right = 0.1f;
+	float bottom = -0.1f;
+	float top = 0.1f;
+	float znear = 0.2f;
+	float zfar = 1000.0f;
+
+	float farAngle = (float) tan(right/znear);
+	float farRight = zfar * (float) atan(farAngle);
+	float farLeft = - farRight;
+	float farTop = farRight;
+	float farBottom = -farTop;
+
+	mat4 projectionMatrix = frustum(left, right, bottom, top, znear, zfar);
 	glUseProgram(program);
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	glUseProgram(snowprogram);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	printError("GL init create and send projectionMatrix");
+
+	vec3 ntl = {left, top, -znear};
+	vec3 ntr = {right, top, -znear};
+	vec3 nbl = {left, bottom, -znear};
+	vec3 nbr = {right, bottom, -znear};
+	vec3 ftl = {farLeft, farTop, -zfar};
+	vec3 ftr = {farRight, farTop, -zfar};
+	vec3 fbl = {farLeft, farBottom, -zfar};
+	vec3 fbr = {farRight, farBottom, -zfar};
+
+	vec3 farNormal = VectorReverse(CalcNormalVector(ftl, ftr, fbl));
+	vec3 leftNormal = CalcNormalVector(ntl, nbl, ftl);
+	vec3 rightNormal = VectorReverse(CalcNormalVector(ntr, nbr, fbr));
+	vec3 topNormal = VectorReverse(CalcNormalVector(ntl, ntr, ftl));
+	vec3 bottomNormal = CalcNormalVector(nbl, nbr, fbl);
+
+	glUseProgram(snowprogram);
+	glUniform3fv(glGetUniformLocation(snowprogram, "ntl"), 1, &ntl.x);
+	glUniform3fv(glGetUniformLocation(snowprogram, "nbr"), 1, &nbr.x);
+	glUniform3fv(glGetUniformLocation(snowprogram, "ftl"), 1, &ftl.x);
+	glUniform3fv(glGetUniformLocation(snowprogram, "fbr"), 1, &fbr.x);
+	glUniform3fv(glGetUniformLocation(snowprogram, "farNormal"), 1, &farNormal.x);
+	glUniform3fv(glGetUniformLocation(snowprogram, "leftNormal"), 1, &leftNormal.x);
+	glUniform3fv(glGetUniformLocation(snowprogram, "rightNormal"), 1, &rightNormal.x);
+	glUniform3fv(glGetUniformLocation(snowprogram, "topNormal"), 1, &topNormal.x);
+	glUniform3fv(glGetUniformLocation(snowprogram, "bottomNormal"), 1, &bottomNormal.x);
+	printError("GL init create and send frustum points and normals");
+
 
 	// Load terrain data
 	LoadTGATextureData("./res/fft-terrain.tga", &terrainTexture);
@@ -647,4 +689,10 @@ void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char
 
 		glDrawElementsInstanced(GL_TRIANGLES, m->numIndices, GL_UNSIGNED_INT, 0L, count);
 	}
+}
+
+vec3 VectorReverse(vec3 a)
+{
+	vec3 zerovec = {0,0,0};
+	return VectorSub(zerovec, a);
 }
