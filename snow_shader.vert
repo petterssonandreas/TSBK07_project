@@ -17,6 +17,7 @@ in vec2 inTexCoord;
 
 out vec2 texCoord;
 out vec3 exSurface;
+out float discardFrag;
 
 uniform sampler2D heightTex;
 uniform mat4 projMatrix;
@@ -25,6 +26,17 @@ uniform mat4 modelToWorldMatrix;
 uniform float time;
 uniform float time_0;
 uniform int simulationSpeed;
+
+uniform vec3 ftl;
+uniform vec3 fbr;
+uniform vec3 ntl;
+uniform vec3 nbr;
+uniform vec3 farNormal;
+uniform vec3 leftNormal;
+uniform vec3 rightNormal;
+uniform vec3 topNormal;
+uniform vec3 bottomNormal;
+
 
 float snoise(vec2 v);
  
@@ -96,6 +108,27 @@ void main(void)
     if (snow[2*int(x_coord)*int(size_of_world) + 2*int(z_coord)] < snowFactor)
       snow[2*int(x_coord)*int(size_of_world) + 2*int(z_coord)] += 1;
   }
+
+
+
+  // Calculate frustum culling
+  vec4 posView4 = worldToViewMatrix * vec4(x_coord, height, z_coord, 1.0);
+  vec3 posView = vec3(posView4.x, posView4.y, posView4.z);
+  if (dot(posView, farNormal) < dot(ftl, farNormal) 
+  	  || dot(posView, leftNormal) < dot(ftl, leftNormal) 
+  	  || dot(posView, rightNormal) < dot(nbr, rightNormal)
+  	  || dot(posView, topNormal) < dot(ntl, topNormal)
+  	  || dot(posView, bottomNormal) < dot(nbr, bottomNormal))
+  {
+  	// Particle outside frustum, discard fragment
+  	discardFrag = 1.0;
+  }
+  else
+  {
+  	// Particle inside, draw fragment
+  	discardFrag = 0.0;
+  }
+
 
 	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 
 		+ vec4(x_coord, height, z_coord, 0));
