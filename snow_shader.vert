@@ -2,8 +2,9 @@
 #define M_PI 3.1415926535897932384626433832795
 #define no_particles 65536
 #define scaling_factor 20.0
-#define size_of_world 256.0
-#define snowFactor 10.0
+#define size_of_world 256
+//#define imageScale 4
+#define snowFactor 2.0
 
 in vec3 inPosition;
 in vec3 inNormal;
@@ -11,7 +12,7 @@ in vec2 inTexCoord;
 
  layout(std430, binding = 3) buffer layoutName
  {
-    int snow[5*256*5*256];
+    int snow[8*256*8*256];
     vec3 data_SSBO[no_particles];
  };
 
@@ -26,6 +27,7 @@ uniform mat4 modelToWorldMatrix;
 uniform float time;
 uniform float time_0;
 uniform int simulationSpeed;
+uniform int imageScale;
 
 uniform vec3 ftl;
 uniform vec3 fbr;
@@ -49,7 +51,7 @@ void main(void)
   //Restart the snowflake in z-coord
   if (data_SSBO[gl_InstanceID].z == 0)
   {
-  	float z_coord = size_of_world * snoise(vec2(gl_InstanceID,time/10000));
+  	float z_coord = size_of_world * snoise(vec2(gl_InstanceID,time/100000));
   	while (z_coord > size_of_world)
   	{
   		z_coord = z_coord - size_of_world;
@@ -65,7 +67,7 @@ void main(void)
   //Restart the snowflake in x-coord
   if (data_SSBO[gl_InstanceID].x == 0)
   {
-  	float x_coord = size_of_world * snoise(vec2(time/10000,gl_InstanceID));
+  	float x_coord = size_of_world * snoise(vec2(time/100000,gl_InstanceID));
   	while (x_coord > size_of_world)
   	{
   		x_coord = x_coord - size_of_world;
@@ -85,7 +87,8 @@ void main(void)
   //If the starting height has not been called, calculate
   if (data_SSBO[gl_InstanceID].y == 0)
   {
-    data_SSBO[gl_InstanceID].y=  200 * snoise(vec2(gl_InstanceID*2,time/10000000));
+    data_SSBO[gl_InstanceID].y = 200 * snoise(vec2(gl_InstanceID*2,time/10000000));
+    data_SSBO[gl_InstanceID].y += 100;
   }
 
   data_SSBO[gl_InstanceID].y -= 0.0001 * simulationSpeed;
@@ -105,8 +108,8 @@ void main(void)
     data_SSBO[gl_InstanceID].z = 0;
 
     //Accumulated sum of snow that has fallen here
-    if (snow[2*int(x_coord)*int(size_of_world) + 2*int(z_coord)] < snowFactor)
-      snow[2*int(x_coord)*int(size_of_world) + 2*int(z_coord)] += 1;
+    if (snow[int(imageScale*x_coord)*imageScale*size_of_world + int(imageScale*z_coord)] < snowFactor)
+      snow[int(imageScale*x_coord)*imageScale*size_of_world + int(imageScale*z_coord)] += 1;
   }
 
 

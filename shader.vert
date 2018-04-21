@@ -1,6 +1,9 @@
 #version 450
 #define no_particles 65536
+#define size_of_world 256
+//#define imageScale 4
 
+uniform int imageScale;
 
 in  vec3 inPosition;
 in  vec3 inNormal;
@@ -12,7 +15,7 @@ out float Color;
 
  layout(std430, binding = 3) buffer layoutName
  {
-    int snow[512*512];
+    int snow[8*256*8*256];
     vec3 data_SSBO[no_particles];
  };
 
@@ -27,7 +30,8 @@ void main(void)
     normal = normalMatrix * inNormal;
 	texCoord = inTexCoord;
     exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
-    Color = snow[2*int(exSurface.x)*256 + 2*int(exSurface.z)];// == 1)
+    Color = snow[int(imageScale*exSurface.x)*imageScale*size_of_world 
+               + int(imageScale*exSurface.z)];// == 1)
     //{
     //	Color = 1.0;
     //}

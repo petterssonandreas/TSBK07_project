@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-
+#define imageScale 8 // How big the world is in terms of 256x256. 
 #define no_particles 65536
 #define WIN_X_SIZE 700
 #define WIN_Y_SIZE 700
@@ -39,12 +39,10 @@ vec3 camUp = { 0.0f, 1.0f, 0.0f };
 GLfloat scaling_factor = 20.0;
 
 
-
-
 float GetHeight(TextureData *tex, float x, float z)
 {
-	x = 2*x;
-	z = 2*z;
+	x = imageScale*x;
+	z = imageScale*z;
 
 	int x_floored = (int) floor(x);
 	int z_floored = (int) floor(z);
@@ -105,9 +103,9 @@ Model* GenerateTerrain(TextureData *tex)
 		for (z = 0; z < tex->height; z++)
 		{
 			// Vertex array. You need to scale this properly
-			vertexArray[(x + z * tex->width) * 3 + 0] = (GLfloat) x/2;
+			vertexArray[(x + z * tex->width) * 3 + 0] = (GLfloat) x/imageScale;
 			vertexArray[(x + z * tex->width) * 3 + 1] = tex->imageData[(x + z * tex->width) * (tex->bpp / 8)] / scaling_factor;
-			vertexArray[(x + z * tex->width) * 3 + 2] = (GLfloat) z/2;
+			vertexArray[(x + z * tex->width) * 3 + 2] = (GLfloat) z/imageScale;
 			// Normal vectors. You need to calculate these.
 			GLfloat x_prev_intensity = 0;
 			GLfloat x_next_intensity = 0;
@@ -304,11 +302,11 @@ void init(void)
 	
 	static struct ssbo_data_t
 	{
-		GLuint snow[5*256*5*256];
+		GLuint snow[8*256*8*256];
 		vec3 position[no_particles];
 	} ssbo_data;
 
-	for (int j = 1; j < 5*256*5*256; j++)
+	for (int j = 1; j < 8*256*8*256; j++)
 	{
 		ssbo_data.snow[j] = 0;
 	}
@@ -326,6 +324,10 @@ void init(void)
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	printError("GL init create and send buffer for GPU storage");
+	glUseProgram(snowprogram);
+	glUniform1i(glGetUniformLocation(snowprogram, "imageScale"), imageScale);
+	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "imageScale"), imageScale);
 
 	// Set a proper height for the camera
 	camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;

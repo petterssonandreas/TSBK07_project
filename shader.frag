@@ -1,6 +1,6 @@
 #version 450
 #define no_particles 65536
-#define snowFactor 10.0
+#define snowFactor 2.0
 
 out vec4 outColor;
 
