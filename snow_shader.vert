@@ -4,7 +4,7 @@
 #define scaling_factor 20.0
 #define size_of_world 256
 //#define imageScale 4
-#define snowFactor 2.0
+#define snowFactor 1000.0
 
 in vec3 inPosition;
 in vec3 inNormal;
@@ -111,7 +111,7 @@ void main(void)
 
     //Accumulated sum of snow that has fallen here
     if (snow[int(imageScale*x_coord)*imageScale*size_of_world + int(imageScale*z_coord)] < snowFactor)
-      snow[int(imageScale*x_coord)*imageScale*size_of_world + int(imageScale*z_coord)] += 1;
+      snow[int(imageScale*x_coord)*imageScale*size_of_world + int(imageScale*z_coord)] += 100;
   }
 
 

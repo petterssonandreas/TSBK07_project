@@ -37,6 +37,7 @@ vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
 vec3 camUp = { 0.0f, 1.0f, 0.0f };
 
 GLuint isSnowing = 1;
+GLuint meltingFraction = 0;
 
 GLfloat scaling_factor = 20.0;
 
@@ -147,7 +148,7 @@ Model* GenerateTerrain(TextureData *tex)
 				z_next_intensity = intensity - (z_prev_intensity - intensity);
 			}
 
-			vec3 normal = { x_prev_intensity - x_next_intensity, 0.6, z_prev_intensity - z_next_intensity };
+			vec3 normal = { x_prev_intensity - x_next_intensity, (GLfloat) 0.6, z_prev_intensity - z_next_intensity };
 			normal = Normalize(normal);
 
 			normalArray[(x + z * tex->width) * 3 + 0] = normal.x;
@@ -370,6 +371,7 @@ void init(void)
 	glUniform1i(glGetUniformLocation(snowprogram, "isSnowing"), isSnowing);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "snowTex"), 4);
+	glUniform1i(glGetUniformLocation(program, "meltingFactor"), meltingFraction);
 
 	printError("GL init send texture unit numbers to shader");
 }
@@ -404,6 +406,14 @@ void display(void)
 	//glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	//glBindImageTexture(4, snowTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8UI);
 
+	if (meltingFraction < 5)
+		meltingFraction += 1;
+	else
+		meltingFraction = 0;
+	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "meltingFactor"), meltingFraction);
+	printError("GL meltingFactor");
+
 	// Build and send worldToView and camPos
 	mat4 worldToView = lookAtv(camPos, camLookAt, camUp);
 	glUseProgram(program);
@@ -424,8 +434,11 @@ void display(void)
 
 
 	// Draw snow, and send time and modelToWorld before
+	glUseProgram(program);
+	glUniform1f(glGetUniformLocation(program, "time"), t);
 	glUseProgram(snowprogram);
 	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
+
 	mat4 scaleMatrix = S((GLfloat) 0.05, (GLfloat) 0.05, (GLfloat) 0.05);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, scaleMatrix.m);
 	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", no_particles);
@@ -437,6 +450,7 @@ void display(void)
 
 	GLfloat t_current = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
 	GLfloat fps = 1/((t_current - t)/1000);
+
 	printf("fps: %4.2f \n", fps);
 }
 
@@ -507,6 +521,8 @@ void keyReleased(unsigned char key, int x, int y)
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
 	glUniform1i(glGetUniformLocation(snowprogram, "isSnowing"), isSnowing);
+	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "isSnowing"), isSnowing);
 	printf("simulationSpeed: %d\n", simulationSpeed);
 }
 
