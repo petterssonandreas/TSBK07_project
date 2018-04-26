@@ -28,6 +28,7 @@ uniform float time;
 uniform float time_0;
 uniform int simulationSpeed;
 uniform int imageScale;
+uniform int isSnowing;
 
 uniform vec3 ftl;
 uniform vec3 fbr;
@@ -49,7 +50,7 @@ void main(void)
   exSurface = vec3(modelToWorldMatrix * vec4(inPosition, 1.0)); // Send in world coordinates
 
   //Restart the snowflake in z-coord
-  if (data_SSBO[gl_InstanceID].z == 0)
+  if ((data_SSBO[gl_InstanceID].z == 0) && (isSnowing == 1))
   {
   	float z_coord = size_of_world * snoise(vec2(gl_InstanceID,time/100000));
   	while (z_coord > size_of_world)
@@ -65,7 +66,7 @@ void main(void)
   float z_coord = data_SSBO[gl_InstanceID].z;
 
   //Restart the snowflake in x-coord
-  if (data_SSBO[gl_InstanceID].x == 0)
+  if ((data_SSBO[gl_InstanceID].x == 0) && (isSnowing == 1))
   {
   	float x_coord = size_of_world * snoise(vec2(time/100000,gl_InstanceID));
   	while (x_coord > size_of_world)
@@ -85,13 +86,14 @@ void main(void)
 	float x_tex_coord = data_SSBO[gl_InstanceID].x/size_of_world;
 
   //If the starting height has not been called, calculate
-  if (data_SSBO[gl_InstanceID].y == 0)
+  if ((data_SSBO[gl_InstanceID].y == 0) && (isSnowing == 1))
   {
-    data_SSBO[gl_InstanceID].y = 200 * snoise(vec2(gl_InstanceID*2,time/10000000));
-    data_SSBO[gl_InstanceID].y += 100;
+    data_SSBO[gl_InstanceID].y = 100 * snoise(vec2(gl_InstanceID*2,time/10000000));
+    data_SSBO[gl_InstanceID].y += 150;
   }
 
   data_SSBO[gl_InstanceID].y -= 0.0001 * simulationSpeed;
+
   float height = float(data_SSBO[gl_InstanceID].y);
 	
   //Calculate the ground height at this vertex
@@ -103,7 +105,7 @@ void main(void)
   	height = ground_height;
 
     //Use the value zero as flag to redistribute the snowflakes
-    data_SSBO[gl_InstanceID].y += 50;
+    data_SSBO[gl_InstanceID].y = 0;
     data_SSBO[gl_InstanceID].x = 0;
     data_SSBO[gl_InstanceID].z = 0;
 
