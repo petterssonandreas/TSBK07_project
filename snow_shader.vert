@@ -19,6 +19,7 @@ in vec2 inTexCoord;
 out vec2 texCoord;
 out vec3 exSurface;
 out float discardFrag;
+out float distanceToObject;
 
 uniform sampler2D heightTex;
 uniform mat4 projMatrix;
@@ -30,6 +31,8 @@ uniform float time_0;
 uniform int simulationSpeed;
 uniform int imageScale;
 uniform int isSnowing;
+
+uniform vec3 cameraPos;
 
 uniform vec3 ftl;
 uniform vec3 fbr;
@@ -135,11 +138,13 @@ void main(void)
   	discardFrag = 0.0;
   }
 
+  vec3 particlePos = vec3(x_coord, height, z_coord);
+
+  distanceToObject = length(cameraPos - particlePos);
+
   // Create matrix for translation
   mat4 translationMatrix = mat4(1.0);
-  translationMatrix[3].x = x_coord;
-  translationMatrix[3].y = height;
-  translationMatrix[3].z = z_coord;
+  translationMatrix[3] = vec4(particlePos, 1.0);
 
   mat4 modelToView = worldToViewMatrix * translationMatrix;
 

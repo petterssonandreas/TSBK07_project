@@ -410,6 +410,7 @@ void display(void)
 	glUniform3fv(glGetUniformLocation(program, "cameraPos"), 1, &camPos.x);
 	glUniformMatrix4fv(glGetUniformLocation(program, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
 	glUseProgram(snowprogram);
+	glUniform3fv(glGetUniformLocation(snowprogram, "cameraPos"), 1, &camPos.x);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
 	printError("GL display send camera and worldToView");
 
@@ -425,7 +426,7 @@ void display(void)
 	// Draw snow, and send time and modelToWorld before
 	glUseProgram(snowprogram);
 	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
-	mat4 scaleMatrix = S((GLfloat) 0.05, (GLfloat) 0.05, (GLfloat) 0.05);
+	mat4 scaleMatrix = S((GLfloat) 0.1, (GLfloat) 0.1, (GLfloat) 0.1);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "scaleMatrix"), 1, GL_TRUE, scaleMatrix.m);
 	DrawModelInstanced(plateModel, snowprogram, "inPosition", NULL, "inTexCoord", no_particles);
 
