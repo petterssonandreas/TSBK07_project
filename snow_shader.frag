@@ -17,7 +17,7 @@ void main(void)
 		discard;
 		return;
 	}
-    //outColor = texture(tex, texCoord);
+    //outColor = texture(snowflakeTex, texCoord);
     //outColor = vec4(InstanceID,0,0,1);
     //outColor = vec4(data_SSBO[InstanceID],0,0,1);
     outColor = vec4(1,1,1,1);

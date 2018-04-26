@@ -188,7 +188,7 @@ Model* GenerateTerrain(TextureData *tex)
 
 
 // vertex array object
-Model *terrainModel, *lakeModel, *skyModel, *cubeModel;
+Model *terrainModel, *lakeModel, *skyModel, *plateModel;
 // Reference to shader program
 GLuint program, snowprogram;
 // Textures for terrain and lake height maps
@@ -224,7 +224,7 @@ void init(void)
 
 	// Load models
 	skyModel = LoadModelPlus("./res/skyboxsnow.obj");
-	cubeModel = LoadModelPlus("./res/cube.obj");
+	plateModel = LoadModelPlus("./res/plate.obj");
 	printError("GL init load models");
 
 	// Load textures
@@ -408,7 +408,6 @@ void display(void)
 	glUniform3fv(glGetUniformLocation(program, "cameraPos"), 1, &camPos.x);
 	glUniformMatrix4fv(glGetUniformLocation(program, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
 	glUseProgram(snowprogram);
-	glUniform3fv(glGetUniformLocation(snowprogram, "cameraPos"), 1, &camPos.x);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
 	printError("GL display send camera and worldToView");
 
@@ -425,8 +424,8 @@ void display(void)
 	glUseProgram(snowprogram);
 	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
 	mat4 scaleMatrix = S((GLfloat) 0.05, (GLfloat) 0.05, (GLfloat) 0.05);
-	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "modelToWorldMatrix"), 1, GL_TRUE, scaleMatrix.m);
-	DrawModelInstanced(cubeModel, snowprogram, "inPosition", NULL, "inTexCoord", no_particles);
+	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "scaleMatrix"), 1, GL_TRUE, scaleMatrix.m);
+	DrawModelInstanced(plateModel, snowprogram, "inPosition", NULL, "inTexCoord", no_particles);
 
 	printError("GL display draw snow");
 

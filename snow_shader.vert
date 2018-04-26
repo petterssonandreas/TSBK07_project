@@ -24,6 +24,7 @@ uniform sampler2D heightTex;
 uniform mat4 projMatrix;
 uniform mat4 worldToViewMatrix;
 uniform mat4 modelToWorldMatrix;
+uniform mat4 scaleMatrix;
 uniform float time;
 uniform float time_0;
 uniform int simulationSpeed;
@@ -132,9 +133,27 @@ void main(void)
   	discardFrag = 0.0;
   }
 
+  // Create matrix for translation
+  mat4 translationMatrix = mat4(1.0);
+  translationMatrix[3].x = x_coord;
+  translationMatrix[3].y = height;
+  translationMatrix[3].z = z_coord;
 
-	gl_Position = projMatrix * worldToViewMatrix * (modelToWorldMatrix * vec4(inPosition, 1.0) 
-		+ vec4(x_coord, height, z_coord, 0));
+  mat4 modelToView = worldToViewMatrix * translationMatrix;
+
+  // Remove rotations to get billboard
+  modelToView[0][0] = 1.0;
+  modelToView[1][0] = 0.0;
+  modelToView[2][0] = 0.0;
+  modelToView[0][1] = 0.0;
+  modelToView[1][1] = 1.0;
+  modelToView[2][1] = 0.0;
+  modelToView[0][2] = 0.0;
+  modelToView[1][2] = 0.0;
+  modelToView[2][2] = 1.0;
+  
+
+  gl_Position = projMatrix * modelToView * scaleMatrix * vec4(inPosition, 1.0);
 }
 
 
