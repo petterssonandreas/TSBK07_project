@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define imageScale 8 // How big the world is in terms of 256x256. 
+#define imageScale 4 // How big the world is in terms of 256x256. 
 #define no_particles 65536
 #define WIN_X_SIZE 700
 #define WIN_Y_SIZE 700
@@ -312,11 +312,11 @@ void init(void)
 	
 	static struct ssbo_data_t
 	{
-		GLuint snow[8*256*8*256];
+		GLuint snow[4*256*4*256];
 		vec3 position[no_particles];
 	} ssbo_data;
 
-	for (int j = 1; j < 8*256*8*256; j++)
+	for (int j = 1; j < 4*256*4*256; j++)
 	{
 		ssbo_data.snow[j] = 0;
 	}

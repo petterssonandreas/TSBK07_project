@@ -12,7 +12,7 @@ in vec2 inTexCoord;
 
  layout(std430, binding = 3) buffer layoutName
  {
-    int snow[8*256*8*256];
+    int snow[4*256*4*256];
     vec3 data_SSBO[no_particles];
  };
 
