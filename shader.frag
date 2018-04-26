@@ -27,12 +27,12 @@ float directionalLight(vec3 lightDirection,
 
 void main(void)
 {
-    if ((discardFrag > 0) && (drawing_skyBox != 1))
-    {
-        discard;
-        return;
-    }
-    vec3 lightDir = vec3(-1,4,-1);
+   // if ((discardFrag > 0) && (drawing_skyBox != 1))
+    //{
+    //    discard;
+    //    return;
+    //}
+    vec3 lightDir = vec3(1,2,1);
 
     if(drawing_lake_bottom == 1 && exSurface.y == 0)
     {
@@ -65,15 +65,15 @@ void main(void)
     else
     {
         float shade = directionalLight(lightDir, 0.0, 0.0);
-        vec4 grassdirt = (((1 - abs(normal.x)) * texture(tex, texCoord) + 
-                            abs(normal.x) * texture(dirtTex, texCoord)) +  
-                         ((1 - abs(normal.z)) * texture(tex, texCoord) + 
-                            abs(normal.z) * texture(dirtTex, texCoord))); 
+        vec4 grass = texture(tex, texCoord);
 
         vec4 snow = texture(snowTex, texCoord);
 
-        outColor = (1 - Color/snowFactor) * grassdirt * vec4(vec3(2 * shade), 1.0)  * 0.5 + 
-                        (Color/snowFactor) * snow * vec4(vec3(1.5 * shade),1.0);
+        //outColor = vec4(vec3(shade),1.0);
+
+        //outColor = (1 - Color/snowFactor) * grass * vec4(vec3(2 * shade), 1.0)  * 0.5 + 
+        //                (Color/snowFactor) * snow * vec4(vec3(1.5 * shade),1.0);
+        outColor = (1 - Color/snowFactor) * vec4(vec3(grass *1.5*shade) + 0.1, 1.0) + Color/snowFactor * vec4(vec3(snow * 1/0.7*shade), 1.0);
     }
 }
 

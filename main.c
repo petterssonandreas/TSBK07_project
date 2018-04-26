@@ -145,7 +145,7 @@ Model* GenerateTerrain(TextureData *tex)
 				z_next_intensity = intensity - (z_prev_intensity - intensity);
 			}
 
-			vec3 normal = { x_prev_intensity - x_next_intensity, 1, z_prev_intensity - z_next_intensity };
+			vec3 normal = { x_prev_intensity - x_next_intensity, 0.6, z_prev_intensity - z_next_intensity };
 			normal = Normalize(normal);
 
 			normalArray[(x + z * tex->width) * 3 + 0] = normal.x;
