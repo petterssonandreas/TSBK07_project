@@ -31,7 +31,7 @@ void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char
 vec3 VectorReverse(vec3 a);
 
 
-const float cameraHeight = 5.0;
+const float cameraHeight = 15.0;
 vec3 camPos = { 10.0f, 20.0f, 0.0f };
 vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
 vec3 camUp = { 0.0f, 1.0f, 0.0f };
@@ -152,8 +152,8 @@ Model* GenerateTerrain(TextureData *tex)
 			normalArray[(x + z * tex->width) * 3 + 1] = normal.y;
 			normalArray[(x + z * tex->width) * 3 + 2] = normal.z;
 			// Texture coordinates. You may want to scale them.
-			texCoordArray[(x + z * tex->width) * 2 + 0] = (GLfloat) x;
-			texCoordArray[(x + z * tex->width) * 2 + 1] = (GLfloat) z;
+			texCoordArray[(x + z * tex->width) * 2 + 0] = (GLfloat) x/100.f;
+			texCoordArray[(x + z * tex->width) * 2 + 1] = (GLfloat) z/100.f;
 		}
 	for (x = 0; x < tex->width - 1; x++)
 		for (z = 0; z < tex->height - 1; z++)
@@ -287,6 +287,16 @@ void init(void)
 	glUniform3fv(glGetUniformLocation(snowprogram, "rightNormal"), 1, &rightNormal.x);
 	glUniform3fv(glGetUniformLocation(snowprogram, "topNormal"), 1, &topNormal.x);
 	glUniform3fv(glGetUniformLocation(snowprogram, "bottomNormal"), 1, &bottomNormal.x);
+	glUseProgram(program);
+	glUniform3fv(glGetUniformLocation(program, "ntl"), 1, &ntl.x);
+	glUniform3fv(glGetUniformLocation(program, "nbr"), 1, &nbr.x);
+	glUniform3fv(glGetUniformLocation(program, "ftl"), 1, &ftl.x);
+	glUniform3fv(glGetUniformLocation(program, "fbr"), 1, &fbr.x);
+	glUniform3fv(glGetUniformLocation(program, "farNormal"), 1, &farNormal.x);
+	glUniform3fv(glGetUniformLocation(program, "leftNormal"), 1, &leftNormal.x);
+	glUniform3fv(glGetUniformLocation(program, "rightNormal"), 1, &rightNormal.x);
+	glUniform3fv(glGetUniformLocation(program, "topNormal"), 1, &topNormal.x);
+	glUniform3fv(glGetUniformLocation(program, "bottomNormal"), 1, &bottomNormal.x);
 	printError("GL init create and send frustum points and normals");
 
 
@@ -422,6 +432,10 @@ void display(void)
 
 	glutSwapBuffers();
 	printError("GL display swap buffers");
+
+	GLfloat t_current = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
+	GLfloat fps = 1/((t_current - t)/1000);
+	printf("fps: %4.2f \n", fps);
 }
 
 void timer(int i)

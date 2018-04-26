@@ -8,6 +8,7 @@ in vec2 texCoord;
 in vec3 normal;
 in vec3 exSurface;
 in float Color;
+in float discardFrag;
 
 uniform vec3 cameraPos;
 uniform sampler2D tex;
@@ -26,6 +27,11 @@ float directionalLight(vec3 lightDirection,
 
 void main(void)
 {
+    if ((discardFrag > 0) && (drawing_skyBox != 1))
+    {
+        discard;
+        return;
+    }
     vec3 lightDir = vec3(-1,4,-1);
 
     if(drawing_lake_bottom == 1 && exSurface.y == 0)
