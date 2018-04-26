@@ -36,6 +36,8 @@ vec3 camPos = { 10.0f, 20.0f, 0.0f };
 vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
 vec3 camUp = { 0.0f, 1.0f, 0.0f };
 
+GLuint isSnowing = 1;
+
 GLfloat scaling_factor = 20.0;
 
 
@@ -145,7 +147,7 @@ Model* GenerateTerrain(TextureData *tex)
 				z_next_intensity = intensity - (z_prev_intensity - intensity);
 			}
 
-			vec3 normal = { x_prev_intensity - x_next_intensity, 1, z_prev_intensity - z_next_intensity };
+			vec3 normal = { x_prev_intensity - x_next_intensity, 0.6, z_prev_intensity - z_next_intensity };
 			normal = Normalize(normal);
 
 			normalArray[(x + z * tex->width) * 3 + 0] = normal.x;
@@ -365,7 +367,7 @@ void init(void)
 	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
 	glUniform1i(glGetUniformLocation(snowprogram, "snowflakeTex"), 5);
 	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
-
+	glUniform1i(glGetUniformLocation(snowprogram, "isSnowing"), isSnowing);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "snowTex"), 4);
 
@@ -489,8 +491,21 @@ void keyReleased(unsigned char key, int x, int y)
 			simulationSpeed = MIN_SIM_SPEED;
 		}
 	}
+	else if (key == ' ')
+	{
+		if (isSnowing == 1)
+		{
+			isSnowing = 0;
+		}
+		else
+		{ 
+			isSnowing = 1;
+		}
+	}
 
+	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
+	glUniform1i(glGetUniformLocation(snowprogram, "isSnowing"), isSnowing);
 	printf("simulationSpeed: %d\n", simulationSpeed);
 }
 
