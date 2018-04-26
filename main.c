@@ -14,8 +14,8 @@
 
 #define imageScale 2// How big the world is in terms of 256x256. 
 #define no_particles 65536
-#define WIN_X_SIZE 700
-#define WIN_Y_SIZE 700
+#define WIN_X_SIZE 1920
+#define WIN_Y_SIZE 1080
 
 #ifdef WIN32
 #include <windows.h>
@@ -496,7 +496,8 @@ void mouseMoved(int x, int y)
 	glutWarpPointer(WIN_X_SIZE / 2, WIN_Y_SIZE / 2);
 }
 
-#define MAX_SIM_SPEED 100000
+#define MAX_SIM_SPEED 65536
+#define MAX_WIND_SPEED 256
 #define MIN_SIM_SPEED 1
 
 void keyReleased(unsigned char key, int x, int y)
@@ -611,22 +612,22 @@ void keyReleased(unsigned char key, int x, int y)
 	}
 
 
-	if (windDirection.x > MAX_SIM_SPEED)
+	if (windDirection.x > MAX_WIND_SPEED)
 	{
-		windDirection.x = MAX_SIM_SPEED;
+		windDirection.x = MAX_WIND_SPEED;
 	}
-	else if (windDirection.x < -MAX_SIM_SPEED)
+	else if (windDirection.x < -MAX_WIND_SPEED)
 	{
-		windDirection.x = -MAX_SIM_SPEED;
+		windDirection.x = -MAX_WIND_SPEED;
 	}
 
-	if (windDirection.z > MAX_SIM_SPEED)
+	if (windDirection.z > MAX_WIND_SPEED)
 	{
-		windDirection.z = MAX_SIM_SPEED;
+		windDirection.z = MAX_WIND_SPEED;
 	}
-	else if (windDirection.z < -MAX_SIM_SPEED)
+	else if (windDirection.z < -MAX_WIND_SPEED)
 	{
-		windDirection.z = -MAX_SIM_SPEED;
+		windDirection.z = -MAX_WIND_SPEED;
 	}
 
 
@@ -648,6 +649,7 @@ int main(int argc, char *argv[])
 	glutInitContextVersion(3, 2);
 	glutInitWindowSize(WIN_X_SIZE, WIN_Y_SIZE);
 	glutCreateWindow ("TSBK07 Project");
+	glutFullScreen();
 #ifdef WIN32
 	glewInit();
 #endif
