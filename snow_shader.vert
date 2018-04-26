@@ -44,6 +44,9 @@ uniform vec3 rightNormal;
 uniform vec3 topNormal;
 uniform vec3 bottomNormal;
 
+uniform int x_wind;
+uniform int z_wind;
+
 
 float snoise(vec2 v);
  
@@ -84,6 +87,35 @@ void main(void)
     data_SSBO[gl_InstanceID].x = x_coord;
   }
   float x_coord = data_SSBO[gl_InstanceID].x;
+
+
+
+  // Update position due to wind
+  x_coord += float(x_wind) * 0.00001 * simulationSpeed;
+  while (x_coord > size_of_world)
+  {
+  	x_coord = x_coord - size_of_world;
+  }
+  while (x_coord < 0.0)
+  {
+  	x_coord = x_coord + size_of_world;
+  }
+  data_SSBO[gl_InstanceID].x = x_coord;
+
+
+  z_coord += float(z_wind) * 0.00001 * simulationSpeed;
+  while (z_coord > size_of_world)
+  {
+  	z_coord = z_coord - size_of_world;
+  }
+  while (z_coord < 0.0)
+  {
+  	z_coord = z_coord + size_of_world;
+  }
+  data_SSBO[gl_InstanceID].z = z_coord;
+
+
+
 
   //Calculate the tex coord of the vertex to check the height
 	float z_tex_coord = data_SSBO[gl_InstanceID].z/size_of_world;

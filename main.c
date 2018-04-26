@@ -204,7 +204,14 @@ GLuint snowTex;
 GLuint heightTex;
 GLuint snowflakeTex;
 
+struct vec2int
+{
+	int x;
+	int z;
+};
+
 int simulationSpeed;
+struct vec2int windDirection;
 
 
 void init(void)
@@ -363,12 +370,16 @@ void init(void)
 
 
 	simulationSpeed = 100;
+	windDirection.x = 0;
+	windDirection.z = 0;
 
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
 	glUniform1i(glGetUniformLocation(snowprogram, "snowflakeTex"), 5);
 	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
 	glUniform1i(glGetUniformLocation(snowprogram, "isSnowing"), isSnowing);
+	glUniform1i(glGetUniformLocation(snowprogram, "x_wind"), windDirection.x);
+	glUniform1i(glGetUniformLocation(snowprogram, "z_wind"), windDirection.z);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "snowTex"), 4);
 	glUniform1i(glGetUniformLocation(program, "meltingFactor"), meltingFraction);
@@ -517,10 +528,113 @@ void keyReleased(unsigned char key, int x, int y)
 			isSnowing = 1;
 		}
 	}
+	else if (key == '0')
+	{
+		windDirection.x = 0;
+		windDirection.z = 0;
+	}
+	else if (key == GLUT_KEY_RIGHT)
+	{
+		if (windDirection.x > 1)
+		{
+			windDirection.x /= 2;
+		}
+		else if (windDirection.x == 1)
+		{
+			windDirection.x = 0;
+		}
+		else if (windDirection.x == 0)
+		{
+			windDirection.x = -1;
+		}
+		else
+		{
+			windDirection.x *= 2;
+		}
+	}
+	else if (key == GLUT_KEY_LEFT)
+	{
+		if (windDirection.x < -1)
+		{
+			windDirection.x /= 2;
+		}
+		else if (windDirection.x == -1)
+		{
+			windDirection.x = 0;
+		}
+		else if (windDirection.x == 0)
+		{
+			windDirection.x = 1;
+		}
+		else
+		{
+			windDirection.x *= 2;
+		}
+	}
+	else if (key == GLUT_KEY_DOWN)
+	{
+		if (windDirection.z > 1)
+		{
+			windDirection.z /= 2;
+		}
+		else if (windDirection.x == 1)
+		{
+			windDirection.z = 0;
+		}
+		else if (windDirection.z == 0)
+		{
+			windDirection.z = -1;
+		}
+		else
+		{
+			windDirection.z *= 2;
+		}
+	}
+	else if (key == GLUT_KEY_UP)
+	{
+		if (windDirection.z < -1)
+		{
+			windDirection.z /= 2;
+		}
+		else if (windDirection.z == -1)
+		{
+			windDirection.z = 0;
+		}
+		else if (windDirection.z == 0)
+		{
+			windDirection.z = 1;
+		}
+		else
+		{
+			windDirection.z *= 2;
+		}
+	}
+
+
+	if (windDirection.x > MAX_SIM_SPEED)
+	{
+		windDirection.x = MAX_SIM_SPEED;
+	}
+	else if (windDirection.x < -MAX_SIM_SPEED)
+	{
+		windDirection.x = -MAX_SIM_SPEED;
+	}
+
+	if (windDirection.z > MAX_SIM_SPEED)
+	{
+		windDirection.z = MAX_SIM_SPEED;
+	}
+	else if (windDirection.z < -MAX_SIM_SPEED)
+	{
+		windDirection.z = -MAX_SIM_SPEED;
+	}
+
 
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
 	glUniform1i(glGetUniformLocation(snowprogram, "isSnowing"), isSnowing);
+	glUniform1i(glGetUniformLocation(snowprogram, "x_wind"), windDirection.x);
+	glUniform1i(glGetUniformLocation(snowprogram, "z_wind"), windDirection.z);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "isSnowing"), isSnowing);
 	printf("simulationSpeed: %d\n", simulationSpeed);
