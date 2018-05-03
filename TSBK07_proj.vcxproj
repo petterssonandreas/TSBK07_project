@@ -89,6 +89,7 @@
     <ClCompile Include="draw.c" />
     <ClCompile Include="frustum.c" />
     <ClCompile Include="heightMap.c" />
+    <ClCompile Include="initFunctions.c" />
     <ClCompile Include="keyboard.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="simplefont.c" />

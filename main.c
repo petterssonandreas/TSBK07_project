@@ -25,33 +25,13 @@
 #include "skybox.h"
 #include "defines.h"
 #include "draw.h"
-
-#define imageScale 2// How big the world is in terms of 256x256. 
-
-
-
-const float cameraHeight = 15.0;
-vec3 camPos = { 10.0f, 20.0f, 0.0f };
-vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
-vec3 camUp = { 0.0f, 1.0f, 0.0f };
-
-GLuint isSnowing = 1;
-
-GLfloat scaling_factor = 20.0;
-
-
-void reshape(GLsizei w, GLsizei h)
-{
-	glViewport(0, 0, w, h);
-	sfSetRasterSize(w, h);
-}
-
+#include "initFunctions.h"
 
 
 // vertex array object
-Model *terrainModel, *lakeModel, *skyModel, *plateModel;
+Model *terrainModel, *lakeModel, *plateModel;
 // Reference to shader program
-GLuint program, snowprogram;
+GLuint program, snowprogram, texprogram;
 // Textures for terrain and lake height maps
 TextureData terrainTexture, lakeTexture;
 // References to different textures
@@ -63,14 +43,9 @@ GLuint heightTex;
 GLuint snowflakeTex;
 GLuint bumpTex;
 
-
-int simulationSpeed;
-struct vec2int windDirection;
-
-GLuint texprogram;
-
+// Reference to cubemap for skybox
 GLuint cubemap;
-
+// Texture filenames for skybox
 char *textureFileName[6] = 
 {
 	"./res/positive_z.tga",
@@ -80,10 +55,29 @@ char *textureFileName[6] =
   	"./res/positive_x.tga",
   	"./res/negative_x.tga",
 };
-
+// References to the textures used in skybox
 TextureData texData[6];
 
-void loadTextures()
+
+// Camera settings
+const float cameraHeight = 15.0;
+vec3 camPos = { 0.0f, 0.0f, 0.0f };
+vec3 camLookAt = { 0.0f, 25.0f, 15.0f };
+vec3 camUp = { 0.0f, 1.0f, 0.0f };
+
+// Map settings
+GLfloat scaling_factor = 20.0;
+
+// Simulation settings
+GLuint isSnowing = 1;
+int simulationSpeed;
+struct vec2int windDirection;
+
+
+
+
+
+void loadSkyboxTextures()
 {
 	glGenTextures(1, &cubemap);	
 	glActiveTexture(GL_TEXTURE6);  
@@ -132,7 +126,6 @@ void init(void)
 
 
 	// Load models
-	skyModel = LoadModelPlus("./res/skyboxsnow.obj");
 	plateModel = LoadModelPlus("./res/plate.obj");
 	printError("GL init load models");
 
@@ -166,45 +159,18 @@ void init(void)
 	// Load terrain data
 	LoadTGATextureData("./res/fft-terrain.tga", &terrainTexture);
 	terrainModel = GenerateTerrain(&terrainTexture);
+	// Set a proper height for the camera
+	camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
+
 	// Load lake
 	LoadTGATextureData("./res/lake_bottom.tga", &lakeTexture);
 	lakeModel = GenerateTerrain(&lakeTexture);
 	printError("GL init load terrain and lake");
 
-	GLuint ssbo = 0;
 	
-	static struct ssbo_data_t
-	{
-		GLuint snow[2*256*2*256];
-		vec3 position[no_particles];
-	} ssbo_data;
 
-	for (int j = 1; j < 2*256*2*256; j++)
-	{
-		ssbo_data.snow[j] = 0;
-	}
-	for (int i = 1; i < no_particles; i++)
-	{
-		//ssbo_data.snow[i] = 0;
-		ssbo_data.position[i].x = 0;
-		ssbo_data.position[i].y = 0;
-		ssbo_data.position[i].z = 0;
-	}
-	glGenBuffers(1, &ssbo);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, (sizeof(struct ssbo_data_t)), NULL, GL_DYNAMIC_COPY);
-	//glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(ssbo_data), &ssbo_data);
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	createSSBO();
 	printError("GL init create and send buffer for GPU storage");
-	glUseProgram(snowprogram);
-	glUniform1i(glGetUniformLocation(snowprogram, "imageScale"), imageScale);
-	glUseProgram(program);
-	glUniform1i(glGetUniformLocation(program, "imageScale"), imageScale);
-
-	// Set a proper height for the camera
-	camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + 5;
-	camLookAt.y = camPos.y;
 
 	// Bind textures
 	glActiveTexture(GL_TEXTURE0);
@@ -265,26 +231,34 @@ void init(void)
 
 	printError("GL init bind textures");
 
+	glUseProgram(snowprogram);
+	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), heightTex);
+	glUniform1i(glGetUniformLocation(snowprogram, "snowflakeTex"), snowflakeTex);
+	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "snowTex"), snowTex);
+	glUniform1i(glGetUniformLocation(program, "cubemap"), 6); // Since GL_TEXTURE6 is used for the cubemap
+	glUniform1i(glGetUniformLocation(program, "bumpTex"), bumpTex);
+	glUseProgram(texprogram);
+	glUniform1i(glGetUniformLocation(texprogram, "tex"), 6); // Since GL_TEXTURE6 is used for the cubemap
+	printError("GL init send texture unit numbers to shader");
+
 
 	simulationSpeed = 100;
 	windDirection.x = 0;
 	windDirection.z = 0;
-
 	glUseProgram(snowprogram);
-	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), 3);
-	glUniform1i(glGetUniformLocation(snowprogram, "snowflakeTex"), 5);
 	glUniform1i(glGetUniformLocation(snowprogram, "simulationSpeed"), simulationSpeed);
 	glUniform1i(glGetUniformLocation(snowprogram, "isSnowing"), isSnowing);
 	glUniform1i(glGetUniformLocation(snowprogram, "x_wind"), windDirection.x);
 	glUniform1i(glGetUniformLocation(snowprogram, "z_wind"), windDirection.z);
-	glUseProgram(program);
-	glUniform1i(glGetUniformLocation(program, "snowTex"), 4);
-	glUniform1i(glGetUniformLocation(program, "cubemap"), 6);
-	glUniform1i(glGetUniformLocation(program, "bumpTex"), 7);
-	glUseProgram(texprogram);
-	glUniform1i(glGetUniformLocation(texprogram, "tex"), 6);
+	printError("GL init send initial simulation values");
 
-	printError("GL init send texture unit numbers to shader");
+
+	glUseProgram(snowprogram);
+	glUniform1i(glGetUniformLocation(snowprogram, "imageScale"), imageScale);
+	glUseProgram(program);
+	glUniform1i(glGetUniformLocation(program, "imageScale"), imageScale);
+	printError("GL init send imageScale");
 }
 
 
@@ -355,6 +329,12 @@ void timer(int i)
 	glutPostRedisplay();
 }
 
+void reshape(GLsizei w, GLsizei h)
+{
+	glViewport(0, 0, w, h);
+	sfSetRasterSize(w, h);
+}
+
 
 
 
@@ -377,7 +357,7 @@ int main(int argc, char *argv[])
 	glutHideCursor();
 	glutRepeatingTimer(20);
 	init();
-	loadTextures();
+	loadSkyboxTextures();
 	sfMakeRasterFont();
 	sfSetRasterSize(WIN_X_SIZE, WIN_Y_SIZE);
 	glutMainLoop();
