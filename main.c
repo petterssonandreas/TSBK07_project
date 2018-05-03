@@ -22,8 +22,8 @@
 
 #define imageScale 2// How big the world is in terms of 256x256. 
 #define no_particles 655360
-#define WIN_X_SIZE 700
-#define WIN_Y_SIZE 700
+#define WIN_X_SIZE 1920
+#define WIN_Y_SIZE 1080
 
 void handleKeyboardEvent();
 void draw(Model* model, mat4 mdlMatrix);
@@ -420,8 +420,8 @@ void init(void)
 	printError("GL init load shader programs");
 
 	// Create and send projectionMatrix
-	float left = -0.1f;
-	float right = 0.1f;
+	float left = -0.2f;
+	float right = 0.2f;
 	float bottom = -0.1f;
 	float top = 0.1f;
 	float znear = 0.2f;
@@ -697,19 +697,19 @@ void display(void)
 	char stringText[] = "Rendering time: (ms) ";
 	char stringBuffer[128];
 	sprintf(stringBuffer, "%s%.2f", stringText, fps);
-	sfDrawString(20, 640, stringBuffer);
+	sfDrawString(20, WIN_Y_SIZE - 60, stringBuffer);
 	char stringText2[] = "Simulation speed: ";
 	sprintf(stringBuffer, "%s%i", stringText2, simulationSpeed);
-	sfDrawString(20, 660, stringBuffer);
+	sfDrawString(20, WIN_Y_SIZE - 40, stringBuffer);
 	char stringText3[] = "Number of snowflakes: ";
 	sprintf(stringBuffer, "%s%i", stringText3, no_particles);
-	sfDrawString(20, 680, stringBuffer);
+	sfDrawString(20, WIN_Y_SIZE - 20, stringBuffer);
 	char stringText4[] = "Wind speed x-dir: ";
 	sprintf(stringBuffer, "%s%i", stringText4, windDirection.x);
-	sfDrawString(370, 660, stringBuffer);
+	sfDrawString(370, WIN_Y_SIZE - 40, stringBuffer);
 	char stringText5[] = "Wind speed z-dir: ";
 	sprintf(stringBuffer, "%s%i", stringText5, windDirection.z);
-	sfDrawString(370, 680, stringBuffer);
+	sfDrawString(370, WIN_Y_SIZE - 20, stringBuffer);
 	
 
 
@@ -914,7 +914,7 @@ int main(int argc, char *argv[])
 	init();
 	loadTextures();
 	sfMakeRasterFont();
-	sfSetRasterSize(700, 700);
+	sfSetRasterSize(WIN_X_SIZE, WIN_Y_SIZE);
 	glutMainLoop();
 	exit(0);
 }
