@@ -23,6 +23,7 @@
 #include "frustum.h"
 #include "keyboard.h"
 #include "heightMap.h"
+#include "skybox.h"
 
 #define imageScale 2// How big the world is in terms of 256x256. 
 #define no_particles 655360
@@ -54,6 +55,7 @@ void reshape(GLsizei w, GLsizei h)
 }
 
 
+
 // vertex array object
 Model *terrainModel, *lakeModel, *skyModel, *plateModel;
 // Reference to shader program
@@ -79,98 +81,6 @@ int simulationSpeed;
 struct vec2int windDirection;
 
 GLuint texprogram;
-Model *box[6];
-
-// The vertices for the environment box
-GLfloat vertices[6][6*3] =
-{
-	{ // +x
-		0.5,-0.5,-0.5,		// 1
-		0.5,0.5,-0.5,		// 2
-		0.5,0.5,0.5,			// 6
-		0.5,-0.5,0.5,		// 5
-	},
-	{ // -x
-		-0.5,-0.5,-0.5,		// 0 -0
-		-0.5,-0.5,0.5,		// 4 -1
-		-0.5,0.5,0.5,		// 7 -2
-		-0.5,0.5,-0.5,		// 3 -3
-	},
-	{ // +y
-		0.5,0.5,-0.5,		// 2 -0
-		-0.5,0.5,-0.5,		// 3 -1
-		-0.5,0.5,0.5,		// 7 -2
-		0.5,0.5,0.5,			// 6 -3
-	},
-	{ // -y
-		-0.5,-0.5,-0.5,		// 0
-		0.5,-0.5,-0.5,		// 1
-		0.5,-0.5,0.5,		// 5
-		-0.5,-0.5,0.5		// 4
-	},
-	{ // +z
-		-0.5,-0.5,0.5,		// 4
-		0.5,-0.5,0.5,		// 5
-		0.5,0.5,0.5,			// 6
-		-0.5,0.5,0.5,		// 7
-	},
-	{ // -z
-		-0.5,-0.5,-0.5,	// 0
-		-0.5,0.5,-0.5,		// 3
-		0.5,0.5,-0.5,		// 2
-		0.5,-0.5,-0.5,		// 1
-	}
-};
-
-// Texture coordinates for the environment box
-GLfloat texcoord[6][6*2] =
-{
-	{
-		1.0, 1.0,
-		1.0, 0.0, // left OK
-		0.0, 0.0,
-		0.0, 1.0,
-	},
-	{
-		0.0, 1.0, // right OK
-		1.0, 1.0,
-		1.0, 0.0,
-		0.0, 0.0,
-	},
-	{
-		1.0, 0.0, // top OK
-		0.0, 0.0,
-		0.0, 1.0,
-		1.0, 1.0,
-	},
-	{
-		0.0, 1.0,
-		1.0, 1.0,
-		1.0, 0.0, // bottom
-		0.0, 0.0,
-	},
-	{
-		0.0, 1.0,
-		1.0, 1.0,
-		1.0, 0.0, // back OK
-		0.0, 0.0,
-	},
-	{
-		1.0, 1.0,
-		1.0, 0.0, // front OK
-		0.0, 0.0,
-		0.0, 1.0,
-	}
-};
-GLuint indices[6][6] =
-{
-	{0, 2, 1, 0, 3, 2},
-	{0, 2, 1, 0, 3, 2},
-	{0, 2, 1, 0, 3, 2},
-	{0, 2, 1, 0, 3, 2},
-	{0, 2, 1, 0, 3, 2},
-	{0, 2, 1, 0, 3, 2}
-};
 
 GLuint cubemap;
 
@@ -240,17 +150,7 @@ void init(void)
 	printError("GL init load models");
 
 	// Build the environment cube
-	for (int i = 0; i < 6; i++)
-	{
-		box[i] = LoadDataToModel(
-			vertices[i],
-			NULL,
-			texcoord[i],
-			NULL,
-			indices[i],
-			4,
-			6);
-	}
+	LoadSkyboxData();
 
 	// Load textures
 	LoadTGATextureSimple("./res/cloudysunset.tga", &skyTex);

@@ -91,6 +91,7 @@
     <ClCompile Include="keyboard.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="simplefont.c" />
+    <ClCompile Include="skybox.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.frag" />

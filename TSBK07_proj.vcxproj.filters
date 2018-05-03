@@ -48,6 +48,9 @@
     <ClCompile Include="heightMap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="skybox.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.frag">
