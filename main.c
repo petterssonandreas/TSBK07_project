@@ -29,7 +29,7 @@
 #define imageScale 2// How big the world is in terms of 256x256. 
 #define no_particles 655360
 
-
+void drawInformationText();
 void draw(Model* model, mat4 mdlMatrix);
 void drawLake();
 void drawSkybox(mat4 worldToView);
@@ -296,7 +296,10 @@ void init(void)
 }
 
 
-GLfloat time_s = 0;
+
+
+
+
 
 void display(void)
 {
@@ -345,28 +348,9 @@ void display(void)
 
 	printError("GL display draw snow");
 
-	GLfloat t_current = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
-	GLfloat fps = (t_current - time_s);
-	time_s = t_current;
-
-
-	char stringText[] = "Rendering time: (ms) ";
-	char stringBuffer[128];
-	sprintf(stringBuffer, "%s%.2f", stringText, fps);
-	sfDrawString(20, WIN_Y_SIZE - 60, stringBuffer);
-	char stringText2[] = "Simulation speed: ";
-	sprintf(stringBuffer, "%s%i", stringText2, simulationSpeed);
-	sfDrawString(20, WIN_Y_SIZE - 40, stringBuffer);
-	char stringText3[] = "Number of snowflakes: ";
-	sprintf(stringBuffer, "%s%i", stringText3, no_particles);
-	sfDrawString(20, WIN_Y_SIZE - 20, stringBuffer);
-	char stringText4[] = "Wind speed x-dir: ";
-	sprintf(stringBuffer, "%s%i", stringText4, windDirection.x);
-	sfDrawString(370, WIN_Y_SIZE - 40, stringBuffer);
-	char stringText5[] = "Wind speed z-dir: ";
-	sprintf(stringBuffer, "%s%i", stringText5, windDirection.z);
-	sfDrawString(370, WIN_Y_SIZE - 20, stringBuffer);
-	
+	// Draw some informative text on the screen	
+	drawInformationText();
+	printError("GL display draw text");
 
 
 	glutSwapBuffers();
@@ -378,6 +362,8 @@ void timer(int i)
 	glutTimerFunc(20, &timer, i);
 	glutPostRedisplay();
 }
+
+
 
 
 
@@ -406,7 +392,30 @@ int main(int argc, char *argv[])
 	exit(0);
 }
 
+int previousTime = 0;
+void drawInformationText()
+{
+	int t_current = glutGet(GLUT_ELAPSED_TIME);
+	int fps = (int) (1000.0f/((float) (t_current - previousTime)));
+	previousTime = t_current;
 
+	char stringText[] = "Frames per second: ";
+	char stringBuffer[128];
+	snprintf(stringBuffer, sizeof(stringBuffer), "%s%d", stringText, fps);
+	sfDrawString(20, WIN_Y_SIZE - 60, stringBuffer);
+	char stringText2[] = "Simulation speed: ";
+	snprintf(stringBuffer, sizeof(stringBuffer), "%s%i", stringText2, simulationSpeed);
+	sfDrawString(20, WIN_Y_SIZE - 40, stringBuffer);
+	char stringText3[] = "Number of snowflakes: ";
+	snprintf(stringBuffer, sizeof(stringBuffer), "%s%i", stringText3, no_particles);
+	sfDrawString(20, WIN_Y_SIZE - 20, stringBuffer);
+	char stringText4[] = "Wind speed x-dir: ";
+	snprintf(stringBuffer, sizeof(stringBuffer), "%s%i", stringText4, windDirection.x);
+	sfDrawString(370, WIN_Y_SIZE - 40, stringBuffer);
+	char stringText5[] = "Wind speed z-dir: ";
+	snprintf(stringBuffer, sizeof(stringBuffer), "%s%i", stringText5, windDirection.z);
+	sfDrawString(370, WIN_Y_SIZE - 20, stringBuffer);
+}
 
 void draw(Model* model, mat4 mdlMatrix)
 {

@@ -15,7 +15,7 @@ extern vec3 camUp;
 extern const float cameraHeight;
 
 extern int simulationSpeed;
-extern int isSnowing;
+extern GLuint isSnowing;
 extern struct vec2int windDirection;
 
 extern GLuint program;
