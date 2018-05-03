@@ -86,6 +86,7 @@
     <ClCompile Include="common\VectorUtils3.c" />
     <ClCompile Include="common\Windows\glew.c" />
     <ClCompile Include="common\Windows\MicroGlut.c" />
+    <ClCompile Include="draw.c" />
     <ClCompile Include="frustum.c" />
     <ClCompile Include="heightMap.c" />
     <ClCompile Include="keyboard.c" />

@@ -51,6 +51,9 @@
     <ClCompile Include="skybox.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="draw.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.frag">
