@@ -26,7 +26,6 @@ uniform vec3 topNormal;
 uniform vec3 bottomNormal;
 uniform vec3 cameraPos;
 uniform int isSnowing;
-uniform int meltingFactor;
 uniform int drawing_lake_bottom;
 uniform float time;
 uniform sampler2D bumpTex;

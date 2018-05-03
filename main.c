@@ -42,7 +42,6 @@ vec3 camLookAt = { 0.0f, 0.0f, 0.0f };
 vec3 camUp = { 0.0f, 1.0f, 0.0f };
 
 GLuint isSnowing = 1;
-GLuint meltingFraction = 0;
 
 GLfloat scaling_factor = 20.0;
 
@@ -540,7 +539,6 @@ void init(void)
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "snowTex"), 4);
 	glUniform1i(glGetUniformLocation(program, "cubemap"), 6);
-	glUniform1i(glGetUniformLocation(program, "meltingFactor"), meltingFraction);
 	glUniform1i(glGetUniformLocation(program, "bumpTex"), 7);
 	glUseProgram(texprogram);
 	glUniform1i(glGetUniformLocation(texprogram, "tex"), 6);
@@ -574,13 +572,6 @@ void display(void)
 		firstCall = false;
 	}
 
-	if (meltingFraction < 5)
-		meltingFraction += 1;
-	else
-		meltingFraction = 0;
-	glUseProgram(program);
-	glUniform1i(glGetUniformLocation(program, "meltingFactor"), meltingFraction);
-	printError("GL meltingFactor");
 
 	// Build and send worldToView and camPos
 	mat4 worldToView = lookAtv(camPos, camLookAt, camUp);
