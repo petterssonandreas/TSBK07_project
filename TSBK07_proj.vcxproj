@@ -87,6 +87,8 @@
     <ClCompile Include="common\Windows\glew.c" />
     <ClCompile Include="common\Windows\MicroGlut.c" />
     <ClCompile Include="frustum.c" />
+    <ClCompile Include="heightMap.c" />
+    <ClCompile Include="keyboard.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="simplefont.c" />
   </ItemGroup>

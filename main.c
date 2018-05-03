@@ -21,13 +21,14 @@
 #include "simplefont.h"
 
 #include "frustum.h"
+#include "keyboard.h"
+#include "heightMap.h"
 
 #define imageScale 2// How big the world is in terms of 256x256. 
 #define no_particles 655360
 #define WIN_X_SIZE 1920
 #define WIN_Y_SIZE 1080
 
-void handleKeyboardEvent();
 void draw(Model* model, mat4 mdlMatrix);
 void drawLake();
 void drawSkybox(mat4 worldToView);
@@ -45,51 +46,6 @@ GLuint isSnowing = 1;
 
 GLfloat scaling_factor = 20.0;
 
-
-float GetHeight(TextureData *tex, float x, float z)
-{
-	x = imageScale*x;
-	z = imageScale*z;
-
-	int x_floored = (int) floor(x);
-	int z_floored = (int) floor(z);
-	int x_ceiled = (int) ceil(x);
-	int z_ceiled = (int) ceil(z);
-
-	float height = 0;
-
-
-	if ((x_floored >= 0 && x_ceiled < (int) tex->width) && (z_floored >= 0 && z_ceiled < (int) tex->height))
-	{
-		float x_floor_z_floor_height = tex->imageData[(x_floored + z_floored * tex->width) * (tex->bpp / 8)] / scaling_factor;
-		float x_floor_z_ceil_height = tex->imageData[(x_floored + z_ceiled * tex->width) * (tex->bpp / 8)] / scaling_factor;
-		float x_ceil_z_floor_height = tex->imageData[(x_ceiled + z_floored * tex->width) * (tex->bpp / 8)] / scaling_factor;
-		float x_ceil_z_ceil_height = tex->imageData[(x_ceiled + z_ceiled * tex->width) * (tex->bpp / 8)] / scaling_factor;
-
-
-		// Bottom triangle
-		if (x - x_floored <= z - z_floored)
-		{
-			float x_incline = x_ceil_z_floor_height - x_floor_z_floor_height;
-			float z_incline = x_floor_z_ceil_height - x_floor_z_floor_height;
-
-			height = ((x - x_floored)*x_incline + (z - z_floored)*z_incline) + x_floor_z_floor_height;
-		}
-		// Top triangle
-		else
-		{
-			float x_incline = x_ceil_z_ceil_height - x_floor_z_ceil_height;
-			float z_incline = x_ceil_z_ceil_height - x_ceil_z_floor_height;
-
-			height = x_ceil_z_ceil_height - ((x_ceiled - x)*x_incline + (z_ceiled - z)*z_incline);
-		}
-
-		//return tex->imageData[(x_int + z_int * tex->width) * (tex->bpp/8)] / scaling_factor;
-	}
-
-	// Lack of error handling...
-	return height;
-}
 
 void reshape(GLsizei w, GLsizei h)
 {
@@ -873,112 +829,6 @@ void drawTerrain()
 	DrawModel(terrainModel, program, "inPosition", "inNormal", "inTexCoord"); // Draw terrain
 }
 
-void handleKeyboardEvent()
-{
-#ifdef WIN32
-	if (glutKeyIsDown(27)) // ESC key
-	{
-		// Send exit message to windows
-		PostQuitMessage(0);
-	}
-#endif
-
-	if (glutKeyIsDown('w') || glutKeyIsDown('W'))
-	{
-		vec3 stepDirection = VectorSub(camLookAt, camPos);
-		stepDirection.y = 0; // Set to zero to step in xz-plane
-		stepDirection = Normalize(stepDirection);
-		camLookAt = VectorAdd(camLookAt, stepDirection);
-		camPos = VectorAdd(camPos, stepDirection);
-		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
-		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
-	}
-
-	if (glutKeyIsDown('s') || glutKeyIsDown('S'))
-	{
-		vec3 stepDirection = VectorSub(camLookAt, camPos);
-		stepDirection.y = 0; // Set to zero to step in xz-plane
-		stepDirection = Normalize(stepDirection);
-		camLookAt = VectorSub(camLookAt, stepDirection);
-		camPos = VectorSub(camPos, stepDirection);
-		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
-		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
-	}
-
-	if (glutKeyIsDown('d') || glutKeyIsDown('D'))
-	{
-		vec3 stepDirection = CrossProduct(VectorSub(camLookAt, camPos), camUp);
-		stepDirection.y = 0; // Set to zero to step in xz-plane
-		stepDirection = Normalize(stepDirection);
-		camLookAt = VectorAdd(camLookAt, stepDirection);
-		camPos = VectorAdd(camPos, stepDirection);
-		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
-		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
-	}
-
-	if (glutKeyIsDown('a') || glutKeyIsDown('A'))
-	{
-		vec3 stepDirection = CrossProduct(VectorSub(camLookAt, camPos), camUp);
-		stepDirection.y = 0; // Set to zero to step in xz-plane
-		stepDirection = Normalize(stepDirection);
-		camLookAt = VectorSub(camLookAt, stepDirection);
-		camPos = VectorSub(camPos, stepDirection);
-		float camPos_y = camPos.y;
-		camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
-		camLookAt.y = camLookAt.y + (camPos.y - camPos_y);
-	}
-
-	if (glutKeyIsDown('q') || glutKeyIsDown('Q'))
-	{
-		vec3 stepDirection = VectorSub(camLookAt, camPos);
-		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, (GLfloat) 0.05)), stepDirection);
-		camLookAt = VectorAdd(camPos, camLookAt);
-	}
-
-	if (glutKeyIsDown('e') || glutKeyIsDown('E'))
-	{
-		vec3 stepDirection = VectorSub(camLookAt, camPos);
-		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, (GLfloat) -0.05)), stepDirection);
-		camLookAt = VectorAdd(camPos, camLookAt);
-	}
-
-	/*if (glutKeyIsDown('r'))
-	{
-	camLookAt = VectorAdd(camLookAt, Normalize(camUp));
-	camPos = VectorAdd(camPos, Normalize(camUp));
-	}
-
-	if (glutKeyIsDown('f'))
-	{
-	camLookAt = VectorSub(camLookAt, Normalize(camUp));
-	camPos = VectorSub(camPos, Normalize(camUp));
-	}*/
-
-	if (glutKeyIsDown('t') || glutKeyIsDown('T'))
-	{
-		vec3 stepDirection = VectorSub(camLookAt, camPos);
-		vec3 planarComp = CrossProduct(stepDirection, camUp);
-
-		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, (GLfloat) 0.05)), stepDirection);
-		camLookAt = VectorAdd(camPos, camLookAt);
-
-		camUp = Normalize(CrossProduct(planarComp, VectorSub(camLookAt, camPos)));
-	}
-
-	if (glutKeyIsDown('g') || glutKeyIsDown('G'))
-	{
-		vec3 stepDirection = VectorSub(camLookAt, camPos);
-		vec3 planarComp = CrossProduct(stepDirection, camUp);
-
-		camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, (GLfloat) -0.05)), stepDirection);
-		camLookAt = VectorAdd(camPos, camLookAt);
-
-		camUp = Normalize(CrossProduct(planarComp, VectorSub(camLookAt, camPos)));
-	}
-}
 
 void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char* normalVariableName, char* texCoordVariableName, int count)
 {
