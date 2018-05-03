@@ -24,11 +24,11 @@
 #include "keyboard.h"
 #include "heightMap.h"
 #include "skybox.h"
+#include "defines.h"
 
 #define imageScale 2// How big the world is in terms of 256x256. 
 #define no_particles 655360
-#define WIN_X_SIZE 1920
-#define WIN_Y_SIZE 1080
+
 
 void draw(Model* model, mat4 mdlMatrix);
 void drawLake();
@@ -384,30 +384,6 @@ void timer(int i)
 	glutPostRedisplay();
 }
 
-
-
-void mouseMoved(int x, int y)
-{
-	int xDiff = (WIN_X_SIZE / 2) - x;
-	int yDiff = (WIN_Y_SIZE / 2) - y;
-
-	GLfloat xAngle = (GLfloat) (xDiff / 600.0);
-	GLfloat yAngle = (GLfloat) (yDiff / 600.0);
-
-	// Look left, right
-	vec3 stepDirection = VectorSub(camLookAt, camPos);
-	camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, xAngle)), stepDirection);
-	camLookAt = VectorAdd(camPos, camLookAt);
-
-	// Look up, down
-	stepDirection = VectorSub(camLookAt, camPos);
-	vec3 planarComp = CrossProduct(stepDirection, camUp);
-	camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, yAngle)), stepDirection);
-	camLookAt = VectorAdd(camPos, camLookAt);
-
-	// Move cursor to center of window
-	glutWarpPointer(WIN_X_SIZE / 2, WIN_Y_SIZE / 2);
-}
 
 #define MAX_SIM_SPEED 65536
 #define MAX_WIND_SPEED 256

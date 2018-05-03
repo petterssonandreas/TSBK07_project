@@ -10,6 +10,7 @@ extern vec3 camUp;
 extern const float cameraHeight;
 
 void handleKeyboardEvent();
+void mouseMoved(int x, int y);
 
 
 #endif

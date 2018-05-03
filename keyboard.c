@@ -3,6 +3,7 @@
 #include "VectorUtils3.h"
 #include "MicroGlut.h"
 #include "heightMap.h"
+#include "defines.h"
 
 #ifdef WIN32
 #include <windows.h>
@@ -114,4 +115,27 @@ void handleKeyboardEvent()
 
 		camUp = Normalize(CrossProduct(planarComp, VectorSub(camLookAt, camPos)));
 	}
+}
+
+void mouseMoved(int x, int y)
+{
+	int xDiff = (WIN_X_SIZE / 2) - x;
+	int yDiff = (WIN_Y_SIZE / 2) - y;
+
+	GLfloat xAngle = (GLfloat) (xDiff / 600.0);
+	GLfloat yAngle = (GLfloat) (yDiff / 600.0);
+
+	// Look left, right
+	vec3 stepDirection = VectorSub(camLookAt, camPos);
+	camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(camUp, xAngle)), stepDirection);
+	camLookAt = VectorAdd(camPos, camLookAt);
+
+	// Look up, down
+	stepDirection = VectorSub(camLookAt, camPos);
+	vec3 planarComp = CrossProduct(stepDirection, camUp);
+	camLookAt = MultMat3Vec3(mat4tomat3(ArbRotate(planarComp, yAngle)), stepDirection);
+	camLookAt = VectorAdd(camPos, camLookAt);
+
+	// Move cursor to center of window
+	glutWarpPointer(WIN_X_SIZE / 2, WIN_Y_SIZE / 2);
 }
