@@ -2,5 +2,6 @@
 #define INITFUNCTIONS_H
 
 void createSSBO();
+void loadSkyboxTextures(TextureData * texData);
 
 #endif
