@@ -1,26 +1,29 @@
 // Project for TSBK07
 // Andreas Pettersson & Jonas Ehn
 
+
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
+
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include "MicroGlut.h"
 // uses framework Cocoa
 #include "GL_utilities.h"
 #include "VectorUtils3.h"
 #include "loadobj.h"
 #include "LoadTGA.h"
-
-#include <time.h>
-#include <stdlib.h>
-#include <math.h>
+#include "simplefont.h"
 
 #define imageScale 2// How big the world is in terms of 256x256. 
-#define no_particles 65536
-#define WIN_X_SIZE 1920
-#define WIN_Y_SIZE 1080
-
-#ifdef WIN32
-#include <windows.h>
-#endif
-
+#define no_particles 655360
+#define WIN_X_SIZE 700
+#define WIN_Y_SIZE 700
 
 void handleKeyboardEvent();
 void draw(Model* model, mat4 mdlMatrix);
@@ -85,6 +88,12 @@ float GetHeight(TextureData *tex, float x, float z)
 
 	// Lack of error handling...
 	return height;
+}
+
+void reshape(GLsizei w, GLsizei h)
+{
+	glViewport(0, 0, w, h);
+	sfSetRasterSize(w, h);
 }
 
 
@@ -203,6 +212,7 @@ GLuint dirtTex;
 GLuint snowTex;
 GLuint heightTex;
 GLuint snowflakeTex;
+GLuint bumpTex;
 
 struct vec2int
 {
@@ -213,6 +223,149 @@ struct vec2int
 int simulationSpeed;
 struct vec2int windDirection;
 
+GLuint texprogram;
+Model *box[6];
+
+// The vertices for the environment box
+GLfloat vertices[6][6*3] =
+{
+	{ // +x
+		0.5,-0.5,-0.5,		// 1
+		0.5,0.5,-0.5,		// 2
+		0.5,0.5,0.5,			// 6
+		0.5,-0.5,0.5,		// 5
+	},
+	{ // -x
+		-0.5,-0.5,-0.5,		// 0 -0
+		-0.5,-0.5,0.5,		// 4 -1
+		-0.5,0.5,0.5,		// 7 -2
+		-0.5,0.5,-0.5,		// 3 -3
+	},
+	{ // +y
+		0.5,0.5,-0.5,		// 2 -0
+		-0.5,0.5,-0.5,		// 3 -1
+		-0.5,0.5,0.5,		// 7 -2
+		0.5,0.5,0.5,			// 6 -3
+	},
+	{ // -y
+		-0.5,-0.5,-0.5,		// 0
+		0.5,-0.5,-0.5,		// 1
+		0.5,-0.5,0.5,		// 5
+		-0.5,-0.5,0.5		// 4
+	},
+	{ // +z
+		-0.5,-0.5,0.5,		// 4
+		0.5,-0.5,0.5,		// 5
+		0.5,0.5,0.5,			// 6
+		-0.5,0.5,0.5,		// 7
+	},
+	{ // -z
+		-0.5,-0.5,-0.5,	// 0
+		-0.5,0.5,-0.5,		// 3
+		0.5,0.5,-0.5,		// 2
+		0.5,-0.5,-0.5,		// 1
+	}
+};
+
+// Texture coordinates for the environment box
+GLfloat texcoord[6][6*2] =
+{
+	{
+		1.0, 1.0,
+		1.0, 0.0, // left OK
+		0.0, 0.0,
+		0.0, 1.0,
+	},
+	{
+		0.0, 1.0, // right OK
+		1.0, 1.0,
+		1.0, 0.0,
+		0.0, 0.0,
+	},
+	{
+		1.0, 0.0, // top OK
+		0.0, 0.0,
+		0.0, 1.0,
+		1.0, 1.0,
+	},
+	{
+		0.0, 1.0,
+		1.0, 1.0,
+		1.0, 0.0, // bottom
+		0.0, 0.0,
+	},
+	{
+		0.0, 1.0,
+		1.0, 1.0,
+		1.0, 0.0, // back OK
+		0.0, 0.0,
+	},
+	{
+		1.0, 1.0,
+		1.0, 0.0, // front OK
+		0.0, 0.0,
+		0.0, 1.0,
+	}
+};
+GLuint indices[6][6] =
+{
+	{0, 2, 1, 0, 3, 2},
+	{0, 2, 1, 0, 3, 2},
+	{0, 2, 1, 0, 3, 2},
+	{0, 2, 1, 0, 3, 2},
+	{0, 2, 1, 0, 3, 2},
+	{0, 2, 1, 0, 3, 2}
+};
+
+GLuint cubemap;
+
+char *textureFileName[6] = 
+{
+	"./res/positive_z.tga",
+  	"./res/negative_z.tga",
+ 	"./res/positive_y.tga",
+  	"./res/negative_y.tga",
+  	"./res/positive_x.tga",
+  	"./res/negative_x.tga",
+};
+
+TextureData texData[6];
+
+void loadTextures()
+{
+	glGenTextures(1, &cubemap);	
+	glActiveTexture(GL_TEXTURE6);  
+	
+	for (int i = 0; i < 6; i++)
+	{
+		printf("Loading texture %s\n", textureFileName[i]);
+		LoadTGATexture(textureFileName[i], &texData[i]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+	printf("Texture loaded \n");
+	// Load to cube map
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+	printf("Texture binded\n");
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA, texData[0].w, texData[0].h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData[0].imageData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGBA, texData[1].w, texData[1].h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData[1].imageData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGBA, texData[2].w, texData[2].h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData[2].imageData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGBA, texData[3].w, texData[3].h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData[3].imageData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGBA, texData[4].w, texData[4].h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData[4].imageData);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGBA, texData[5].w, texData[5].h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData[5].imageData);
+	printf("Textures generated\n");
+  
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	printf("Parameters sent \n");
+
+// MIPMAPPING
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+	printf("mipmapping done\n");
+}
 
 void init(void)
 {
@@ -237,6 +390,19 @@ void init(void)
 	plateModel = LoadModelPlus("./res/plate.obj");
 	printError("GL init load models");
 
+	// Build the environment cube
+	for (int i = 0; i < 6; i++)
+	{
+		box[i] = LoadDataToModel(
+			vertices[i],
+			NULL,
+			texcoord[i],
+			NULL,
+			indices[i],
+			4,
+			6);
+	}
+
 	// Load textures
 	LoadTGATextureSimple("./res/cloudysunset.tga", &skyTex);
 	LoadTGATextureSimple("./res/grassplus.tga", &grassTex);
@@ -244,11 +410,13 @@ void init(void)
 	LoadTGATextureSimple("./res/snowTexture.tga", &snowTex);
 	LoadTGATextureSimple("./res/snowflake.tga", &snowflakeTex);
 	LoadTGATextureSimple("./res/fft-terrain.tga", &heightTex);
+	LoadTGATextureSimple("./res/conc2.tga", &bumpTex);
 	printError("GL init load textures");
 
 	// Load and compile shader
 	program = loadShaders("shader.vert", "shader.frag");
 	snowprogram = loadShaders("snow_shader.vert", "snow_shader.frag");
+	texprogram = loadShaders("tex.vert", "tex.frag");
 	printError("GL init load shader programs");
 
 	// Create and send projectionMatrix
@@ -270,6 +438,8 @@ void init(void)
 	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	glUseProgram(snowprogram);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	glUseProgram(texprogram);
+	glUniformMatrix4fv(glGetUniformLocation(texprogram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
 	printError("GL init create and send projectionMatrix");
 
 	vec3 ntl = {left, top, -znear};
@@ -356,16 +526,60 @@ void init(void)
 	// Bind textures
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, grassTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, skyTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, dirtTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, heightTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, snowTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, snowflakeTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, bumpTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
 	printError("GL init bind textures");
 
 
@@ -382,13 +596,18 @@ void init(void)
 	glUniform1i(glGetUniformLocation(snowprogram, "z_wind"), windDirection.z);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "snowTex"), 4);
+	glUniform1i(glGetUniformLocation(program, "cubemap"), 6);
 	glUniform1i(glGetUniformLocation(program, "meltingFactor"), meltingFraction);
+	glUniform1i(glGetUniformLocation(program, "bumpTex"), 7);
+	glUseProgram(texprogram);
+	glUniform1i(glGetUniformLocation(texprogram, "tex"), 6);
 
 	printError("GL init send texture unit numbers to shader");
 }
 
 
 bool firstCall = true;
+GLfloat time_s = 0;
 
 void display(void)
 {
@@ -435,10 +654,26 @@ void display(void)
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
 	printError("GL display send camera and worldToView");
 
+	glDisable(GL_DEPTH_TEST);
+	glUseProgram(texprogram);
+	worldToView.m[3] = 0;
+	worldToView.m[7] = 0;
+	worldToView.m[11] = 0;
+	glUniformMatrix4fv(glGetUniformLocation(texprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
+
+	for (int i = 0; i < 6; i++)
+	{
+		glBindTexture(GL_TEXTURE_2D, texData[i].texID);
+		DrawModel(box[i], texprogram, "inPosition", NULL, "inTexCoord");
+	}
+
+	glEnable(GL_DEPTH_TEST);
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
 
 	// Draw world
 	glUseProgram(program);
-	drawSkybox();
+	//drawSkybox();
 	drawLake(lakeModel, T(0, -GetHeight(&lakeTexture, 0, 0), 0));
 	drawTerrain();
 	printError("GL display draw world");
@@ -456,13 +691,30 @@ void display(void)
 
 	printError("GL display draw snow");
 
+	GLfloat t_current = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
+	GLfloat fps = (t_current - time_s);
+	time_s = t_current;
+	char stringText[] = "Rendering time: (ms) ";
+	char stringBuffer[128];
+	sprintf(stringBuffer, "%s%.2f", stringText, fps);
+	sfDrawString(20, 640, stringBuffer);
+	char stringText2[] = "Simulation speed: ";
+	sprintf(stringBuffer, "%s%i", stringText2, simulationSpeed);
+	sfDrawString(20, 660, stringBuffer);
+	char stringText3[] = "Number of snowflakes: ";
+	sprintf(stringBuffer, "%s%i", stringText3, no_particles);
+	sfDrawString(20, 680, stringBuffer);
+	char stringText4[] = "Wind speed x-dir: ";
+	sprintf(stringBuffer, "%s%i", stringText4, windDirection.x);
+	sfDrawString(370, 660, stringBuffer);
+	char stringText5[] = "Wind speed z-dir: ";
+	sprintf(stringBuffer, "%s%i", stringText5, windDirection.z);
+	sfDrawString(370, 680, stringBuffer);
+	
+
+
 	glutSwapBuffers();
 	printError("GL display swap buffers");
-
-	GLfloat t_current = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
-	GLfloat fps = 1/((t_current - t)/1000);
-
-	printf("fps: %4.2f \n", fps);
 }
 
 void timer(int i)
@@ -654,11 +906,15 @@ int main(int argc, char *argv[])
 	glewInit();
 #endif
 	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
 	glutPassiveMotionFunc(mouseMoved);
 	glutKeyboardUpFunc(keyReleased);
 	glutHideCursor();
 	glutRepeatingTimer(20);
 	init();
+	loadTextures();
+	sfMakeRasterFont();
+	sfSetRasterSize(700, 700);
 	glutMainLoop();
 	exit(0);
 }

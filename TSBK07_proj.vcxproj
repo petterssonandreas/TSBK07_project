@@ -87,6 +87,7 @@
     <ClCompile Include="common\Windows\glew.c" />
     <ClCompile Include="common\Windows\MicroGlut.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="simplefont.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.frag" />

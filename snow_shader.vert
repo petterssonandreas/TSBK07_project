@@ -1,6 +1,6 @@
 #version 450
 #define M_PI 3.1415926535897932384626433832795
-#define no_particles 65536
+#define no_particles 655360
 #define scaling_factor 20.0
 #define size_of_world 256
 //#define imageScale 4

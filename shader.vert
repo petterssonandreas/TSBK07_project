@@ -1,5 +1,5 @@
 #version 450
-#define no_particles 65536
+#define no_particles 655360
 #define size_of_world 256
 //#define imageScale 4
 
@@ -13,6 +13,7 @@ out vec3 normal;
 out vec3 exSurface;
 out float Color;
 out float discardFrag;
+out vec3 reflectedView;
 
 uniform vec3 ftl;
 uniform vec3 fbr;
@@ -27,6 +28,7 @@ uniform vec3 cameraPos;
 uniform int isSnowing;
 uniform int meltingFactor;
 uniform float time;
+uniform sampler2D bumpTex;
 
  layout(std430, binding = 3) buffer layoutName
  {
@@ -87,21 +89,50 @@ void main(void)
 
 
 	gl_Position = projMatrix * worldToViewMatrix* modelToWorldMatrix * vec4(inPosition, 1.0);
+
+// modelToWorldMatrix = model to world
+// worldToViewMatrix = world to view
+
+// IMPORTANT! You MUST know what coordinate system you work in!
+// The skybox is defined in world coordinates. Therefore we need to output a direction in
+// world coordinates.
+// First we transform the position to view coordinates, where it will be the same as the view direction
+// (since the PRP is origin there).
+  vec3 posInViewCoord = vec3(worldToViewMatrix * modelToWorldMatrix * vec4(inPosition, 1.0));
+  vec3 viewDirectionInViewCoord = normalize(posInViewCoord);
+// The we transform the resulting direction (now without translations) back to world coordinates
+// using the inverse of the world-to-view.
+  vec3 viewDirectionInWorldCoord = inverse(mat3(worldToViewMatrix)) * viewDirectionInViewCoord;
+
+// Also transform the normal vector to world coordinates (= skybox coordinates).
+    const float step = 1.0/256.0; // Should match size of texture
+    float bt = texture(bumpTex, texCoord).r - texture(bumpTex, texCoord + vec2(0.0, step)).r;
+    float bs = texture(bumpTex, texCoord).r - texture(bumpTex, texCoord + vec2(step, 0.0)).r;
+    // fake it
+    vec3 ps, pt;
+    ps = 2.0 * cross(inNormal, vec3(1.0, 0.0, 0.0));
+    pt = 2.0 * cross(inNormal, ps);
+    vec3 n = inNormal + ps * bs + pt * bt;
+  vec3 wcNormal = mat3(modelToWorldMatrix) * n;
+// Using "reflect", we reflect the view direction to a reflected direction
+  reflectedView = reflect(viewDirectionInWorldCoord, normalize(wcNormal)); // world coord = model of skybox
+
+
 }
 
 float directionalLight(vec3 lightDirection, float specularExponent, float useSpecular)
 {
-    // vertex shader sends all in world coordinates
+      // vertex shader sends all in world coordinates
     vec3 light = normalize(lightDirection);
     float diffuse, specular, shade;
 
     // Diffuse
-    diffuse = dot(normalize(normal), light);
+    diffuse = dot(normalize(inNormal), light);
     diffuse = max(0.0, diffuse); // No negative light
 
     // Specular
-    vec3 r = reflect(-light, normalize(normal));
-    vec3 v = normalize(cameraPos - exSurface); // View direction
+    vec3 r = reflect(-light, normalize(inNormal));
+    vec3 v = normalize(cameraPos - inPosition); // View direction
     specular = dot(r, v);
     if (specular > 0.0)
         specular = 1.0 * pow(specular, specularExponent);
