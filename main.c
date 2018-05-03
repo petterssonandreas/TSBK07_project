@@ -29,8 +29,8 @@
 
 void handleKeyboardEvent();
 void draw(Model* model, mat4 mdlMatrix);
-void drawLake(Model* model, mat4 mdlMatrix);
-void drawSkybox();
+void drawLake();
+void drawSkybox(mat4 worldToView);
 void drawTerrain();
 void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char* normalVariableName, char* texCoordVariableName, int count);
 vec3 VectorReverse(vec3 a);
@@ -592,27 +592,12 @@ void display(void)
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
 	printError("GL display send camera and worldToView");
 
-	glDisable(GL_DEPTH_TEST);
-	glUseProgram(texprogram);
-	worldToView.m[3] = 0;
-	worldToView.m[7] = 0;
-	worldToView.m[11] = 0;
-	glUniformMatrix4fv(glGetUniformLocation(texprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
 
-	for (int i = 0; i < 6; i++)
-	{
-		glBindTexture(GL_TEXTURE_2D, texData[i].texID);
-		DrawModel(box[i], texprogram, "inPosition", NULL, "inTexCoord");
-	}
-
-	glEnable(GL_DEPTH_TEST);
-	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+	
 
 	// Draw world
-	glUseProgram(program);
-	//drawSkybox();
-	drawLake(lakeModel, T(0, -GetHeight(&lakeTexture, 0, 0), 0));
+	drawSkybox(worldToView);
+	drawLake();
 	drawTerrain();
 	printError("GL display draw world");
 
@@ -632,6 +617,8 @@ void display(void)
 	GLfloat t_current = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
 	GLfloat fps = (t_current - time_s);
 	time_s = t_current;
+
+
 	char stringText[] = "Rendering time: (ms) ";
 	char stringBuffer[128];
 	sprintf(stringBuffer, "%s%.2f", stringText, fps);
@@ -865,28 +852,39 @@ void draw(Model* model, mat4 mdlMatrix)
 	DrawModel(model, program, "inPosition", "inNormal", "inTexCoord");
 }
 
-void drawLake(Model* model, mat4 mdlMatrix)
+void drawLake()
 {
+	mat4 modelToWorld = T(0, -GetHeight(&lakeTexture, 0, 0), 0);
+
+	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "drawing_lake_bottom"), 1);
-	glUniformMatrix4fv(glGetUniformLocation(program, "modelToWorldMatrix"), 1, GL_TRUE, mdlMatrix.m);
+	glUniformMatrix4fv(glGetUniformLocation(program, "modelToWorldMatrix"), 1, GL_TRUE, modelToWorld.m);
 	glUniform1i(glGetUniformLocation(program, "tex"), 0);
-	DrawModel(model, program, "inPosition", "inNormal", "inTexCoord");
+	DrawModel(lakeModel, program, "inPosition", "inNormal", "inTexCoord");
 	glUniform1i(glGetUniformLocation(program, "drawing_lake_bottom"), 0);
 }
 
-void drawSkybox()
+void drawSkybox(mat4 worldToView)
 {
 	glDisable(GL_DEPTH_TEST);
-	glUniform1i(glGetUniformLocation(program, "drawing_skyBox"), 1);
-	glUniformMatrix4fv(glGetUniformLocation(program, "modelToWorldMatrix"), 1, GL_TRUE, T((GLfloat) camPos.x, (GLfloat) (camPos.y - 0.2), (GLfloat) camPos.z).m);
-	glUniform1i(glGetUniformLocation(program, "tex"), 1);
-	DrawModel(skyModel, program, "inPosition", "inNormal", "inTexCoord");
-	glUniform1i(glGetUniformLocation(program, "drawing_skyBox"), 0);
+	glUseProgram(texprogram);
+	worldToView.m[3] = 0;
+	worldToView.m[7] = 0;
+	worldToView.m[11] = 0;
+	glUniformMatrix4fv(glGetUniformLocation(texprogram, "worldToViewMatrix"), 1, GL_TRUE, worldToView.m);
+
+	for (int i = 0; i < 6; i++)
+	{
+		glBindTexture(GL_TEXTURE_2D, texData[i].texID);
+		DrawModel(box[i], texprogram, "inPosition", NULL, "inTexCoord");
+	}
+
 	glEnable(GL_DEPTH_TEST);
 }
 
 void drawTerrain()
 {
+	glUseProgram(program);
 	glUniformMatrix4fv(glGetUniformLocation(program, "modelToWorldMatrix"), 1, GL_TRUE, IdentityMatrix().m);
 	glUniform1i(glGetUniformLocation(program, "tex"), 0);
 	glUniform1i(glGetUniformLocation(program, "dirtTex"), 2);
