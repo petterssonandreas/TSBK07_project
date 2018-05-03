@@ -547,7 +547,6 @@ void init(void)
 }
 
 
-bool firstCall = true;
 GLfloat time_s = 0;
 
 void display(void)
@@ -563,14 +562,6 @@ void display(void)
 	// Get the elapsed time
 	GLfloat t = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
 
-	if (firstCall)
-	{
-		glUseProgram(program);
-		glUniform1f(glGetUniformLocation(program, "time_0"), t);
-		glUseProgram(snowprogram);
-		glUniform1f(glGetUniformLocation(snowprogram, "time_0"), t);
-		firstCall = false;
-	}
 
 
 	// Build and send worldToView and camPos

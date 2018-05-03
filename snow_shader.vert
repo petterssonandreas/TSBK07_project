@@ -27,7 +27,6 @@ uniform mat4 worldToViewMatrix;
 uniform mat4 modelToWorldMatrix;
 uniform mat4 scaleMatrix;
 uniform float time;
-uniform float time_0;
 uniform int simulationSpeed;
 uniform int imageScale;
 uniform int isSnowing;
