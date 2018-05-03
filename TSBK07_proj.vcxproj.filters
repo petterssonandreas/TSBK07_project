@@ -39,6 +39,9 @@
     <ClCompile Include="simplefont.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="frustum.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader.frag">

@@ -20,6 +20,8 @@
 #include "LoadTGA.h"
 #include "simplefont.h"
 
+#include "frustum.h"
+
 #define imageScale 2// How big the world is in terms of 256x256. 
 #define no_particles 655360
 #define WIN_X_SIZE 1920
@@ -378,12 +380,6 @@ void init(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	printError("GL inits");
 
-	// Snow texture
-	//glGenTextures(1, &snowTexture);
-	//glBindTexture(GL_TEXTURE_2D, snowTexture);
-	//glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8UI, 256, 256);
-	//glBindTexture(GL_TEXTURE_2D, 5);
-
 
 	// Load models
 	skyModel = LoadModelPlus("./res/skyboxsnow.obj");
@@ -419,64 +415,11 @@ void init(void)
 	texprogram = loadShaders("tex.vert", "tex.frag");
 	printError("GL init load shader programs");
 
-	// Create and send projectionMatrix
-	float left = -0.2f;
-	float right = 0.2f;
-	float bottom = -0.1f;
-	float top = 0.1f;
-	float znear = 0.2f;
-	float zfar = 1000.0f;
 
-	float farAngle = (float) tan(right/znear);
-	float farRight = zfar * (float) atan(farAngle);
-	float farLeft = - farRight;
-	float farTop = farRight;
-	float farBottom = -farTop;
-
-	mat4 projectionMatrix = frustum(left, right, bottom, top, znear, zfar);
-	glUseProgram(program);
-	glUniformMatrix4fv(glGetUniformLocation(program, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	glUseProgram(snowprogram);
-	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
-	glUseProgram(texprogram);
-	glUniformMatrix4fv(glGetUniformLocation(texprogram, "projMatrix"), 1, GL_TRUE, projectionMatrix.m);
+	// Projection matrix and frustum culling
+	CreateAndSendProjectionMatrix(program, snowprogram, texprogram);
 	printError("GL init create and send projectionMatrix");
-
-	vec3 ntl = {left, top, -znear};
-	vec3 ntr = {right, top, -znear};
-	vec3 nbl = {left, bottom, -znear};
-	vec3 nbr = {right, bottom, -znear};
-	vec3 ftl = {farLeft, farTop, -zfar};
-	vec3 ftr = {farRight, farTop, -zfar};
-	vec3 fbl = {farLeft, farBottom, -zfar};
-	vec3 fbr = {farRight, farBottom, -zfar};
-
-	vec3 farNormal = VectorReverse(CalcNormalVector(ftl, ftr, fbl));
-	vec3 leftNormal = CalcNormalVector(ntl, nbl, ftl);
-	vec3 rightNormal = VectorReverse(CalcNormalVector(ntr, nbr, fbr));
-	vec3 topNormal = VectorReverse(CalcNormalVector(ntl, ntr, ftl));
-	vec3 bottomNormal = CalcNormalVector(nbl, nbr, fbl);
-
-	glUseProgram(snowprogram);
-	glUniform3fv(glGetUniformLocation(snowprogram, "ntl"), 1, &ntl.x);
-	glUniform3fv(glGetUniformLocation(snowprogram, "nbr"), 1, &nbr.x);
-	glUniform3fv(glGetUniformLocation(snowprogram, "ftl"), 1, &ftl.x);
-	glUniform3fv(glGetUniformLocation(snowprogram, "fbr"), 1, &fbr.x);
-	glUniform3fv(glGetUniformLocation(snowprogram, "farNormal"), 1, &farNormal.x);
-	glUniform3fv(glGetUniformLocation(snowprogram, "leftNormal"), 1, &leftNormal.x);
-	glUniform3fv(glGetUniformLocation(snowprogram, "rightNormal"), 1, &rightNormal.x);
-	glUniform3fv(glGetUniformLocation(snowprogram, "topNormal"), 1, &topNormal.x);
-	glUniform3fv(glGetUniformLocation(snowprogram, "bottomNormal"), 1, &bottomNormal.x);
-	glUseProgram(program);
-	glUniform3fv(glGetUniformLocation(program, "ntl"), 1, &ntl.x);
-	glUniform3fv(glGetUniformLocation(program, "nbr"), 1, &nbr.x);
-	glUniform3fv(glGetUniformLocation(program, "ftl"), 1, &ftl.x);
-	glUniform3fv(glGetUniformLocation(program, "fbr"), 1, &fbr.x);
-	glUniform3fv(glGetUniformLocation(program, "farNormal"), 1, &farNormal.x);
-	glUniform3fv(glGetUniformLocation(program, "leftNormal"), 1, &leftNormal.x);
-	glUniform3fv(glGetUniformLocation(program, "rightNormal"), 1, &rightNormal.x);
-	glUniform3fv(glGetUniformLocation(program, "topNormal"), 1, &topNormal.x);
-	glUniform3fv(glGetUniformLocation(program, "bottomNormal"), 1, &bottomNormal.x);
+	CreateAndSendFrustumCullingParameters(program, snowprogram);
 	printError("GL init create and send frustum points and normals");
 
 
@@ -630,11 +573,6 @@ void display(void)
 		glUniform1f(glGetUniformLocation(snowprogram, "time_0"), t);
 		firstCall = false;
 	}
-
-	// Snow height
-	//glDepthMask(false);
-	//glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	//glBindImageTexture(4, snowTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA8UI);
 
 	if (meltingFraction < 5)
 		meltingFraction += 1;
@@ -1108,10 +1046,4 @@ void DrawModelInstanced(Model *m, GLuint program, char* vertexVariableName, char
 
 		glDrawElementsInstanced(GL_TRIANGLES, m->numIndices, GL_UNSIGNED_INT, 0L, count);
 	}
-}
-
-vec3 VectorReverse(vec3 a)
-{
-	vec3 zerovec = {0,0,0};
-	return VectorSub(zerovec, a);
 }
