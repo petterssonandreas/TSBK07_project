@@ -5,7 +5,7 @@ TSBK07-files-c = $(commondir)GL_utilities.c $(commondir)VectorUtils3.c $(commond
 project-files-c = main.c frustum.c keyboard.c heightMap.c skybox.c draw.c initFunctions.c
 project-files-h = defines.h
 
-includeflags = -I$(commondir) -I../common/Linux
+includeflags = -I$(commondir) -I$(commondir)Linux
 links = -lXt -lX11 -lGL -lm
 
 
