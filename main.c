@@ -2,16 +2,22 @@
 // Andreas Pettersson & Jonas Ehn
 
 
+
+// -----------------------------------------------------------------------------
+//          INCLUDES
+// -----------------------------------------------------------------------------
+
+// C headers
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-
 #ifdef WIN32
 #include <windows.h>
 #endif
 
+// TSBK07 headers
 #include "MicroGlut.h"
 #include "GL_utilities.h"
 #include "VectorUtils3.h"
@@ -19,6 +25,7 @@
 #include "LoadTGA.h"
 #include "simplefont.h"
 
+// Project headers
 #include "frustum.h"
 #include "keyboard.h"
 #include "heightMap.h"
@@ -26,6 +33,11 @@
 #include "defines.h"
 #include "draw.h"
 #include "initFunctions.h"
+
+
+// -----------------------------------------------------------------------------
+//          CONSTANTS AND GLOBALS
+// -----------------------------------------------------------------------------
 
 
 // vertex array object
@@ -43,10 +55,8 @@ GLuint heightTex;
 GLuint snowflakeTex;
 GLuint bumpTex;
 
-
 // References to the textures used in skybox
 TextureData texData[6];
-
 
 // Camera settings
 const float cameraHeight = 15.0;
@@ -64,7 +74,9 @@ struct vec2int windDirection;
 
 
 
-
+// -----------------------------------------------------------------------------
+//          INIT
+// -----------------------------------------------------------------------------
 
 
 void init(void)
@@ -83,8 +95,11 @@ void init(void)
 	plateModel = LoadModelPlus("./res/plate.obj");
 	printError("GL init load models");
 
+
 	// Build the environment cube
 	LoadSkyboxData();
+    printError("GL init load skybox data");
+
 
 	// Load textures
 	LoadTGATextureSimple("./res/cloudysunset.tga", &skyTex);
@@ -95,6 +110,7 @@ void init(void)
 	LoadTGATextureSimple("./res/fft-terrain.tga", &heightTex);
 	LoadTGATextureSimple("./res/conc2.tga", &bumpTex);
 	printError("GL init load textures");
+
 
 	// Load and compile shader
 	program = loadShaders("shader.vert", "shader.frag");
@@ -115,16 +131,16 @@ void init(void)
 	terrainModel = GenerateTerrain(&terrainTexture);
 	// Set a proper height for the camera
 	camPos.y = GetHeight(&terrainTexture, camPos.x, camPos.z) + cameraHeight;
-
 	// Load lake
 	LoadTGATextureData("./res/lake_bottom.tga", &lakeTexture);
 	lakeModel = GenerateTerrain(&lakeTexture);
 	printError("GL init load terrain and lake");
 
-	
 
+    // Create the SSBO needed for storage in shaders
 	createSSBO();
 	printError("GL init create and send buffer for GPU storage");
+
 
 	// Bind textures
 	glActiveTexture(GL_TEXTURE0);
@@ -134,7 +150,7 @@ void init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glGenerateMipmap(GL_TEXTURE_2D);
-	
+
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, skyTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -186,6 +202,7 @@ void init(void)
 	printError("GL init bind textures");
 
 
+    // Send all numbers for the different textures
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), heightTex);
 	glUniform1i(glGetUniformLocation(snowprogram, "snowflakeTex"), snowflakeTex);
@@ -198,6 +215,7 @@ void init(void)
 	printError("GL init send texture unit numbers to shader");
 
 
+    // Set and send initial simulation values
 	simulationSpeed = 100;
 	windDirection.x = 0;
 	windDirection.z = 0;
@@ -209,20 +227,19 @@ void init(void)
 	printError("GL init send initial simulation values");
 
 
+    // Send imageScale to determine size of world
 	glUseProgram(snowprogram);
 	glUniform1i(glGetUniformLocation(snowprogram, "imageScale"), imageScale);
 	glUseProgram(program);
 	glUniform1i(glGetUniformLocation(program, "imageScale"), imageScale);
 	printError("GL init send imageScale");
-
-
-
 }
 
 
 
-
-
+// -----------------------------------------------------------------------------
+//          DISPLAY
+// -----------------------------------------------------------------------------
 
 
 void display(void)
@@ -231,13 +248,19 @@ void display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	printError("GL display clear screen");
 
+
 	// Handle key events, i.e. movement
 	handleKeyboardEvent();
 	printError("GL display handle keyboard events");
 
+
 	// Get the elapsed time
 	GLfloat t = (GLfloat)glutGet(GLUT_ELAPSED_TIME);
-
+    glUseProgram(program);
+	glUniform1f(glGetUniformLocation(program, "time"), t);
+	glUseProgram(snowprogram);
+	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
+    printError("GL display send time");
 
 
 	// Build and send worldToView and camPos
@@ -251,8 +274,6 @@ void display(void)
 	printError("GL display send camera and worldToView");
 
 
-	
-
 	// Draw world
 	drawSkybox(worldToView, texData);
 	drawLake(lakeModel, lakeTexture);
@@ -260,19 +281,15 @@ void display(void)
 	printError("GL display draw world");
 
 
-	// Draw snow, and send time and modelToWorld before
-	glUseProgram(program);
-	glUniform1f(glGetUniformLocation(program, "time"), t);
-	glUseProgram(snowprogram);
-	glUniform1f(glGetUniformLocation(snowprogram, "time"), t);
-
+	// Draw snow
+    glUseProgram(snowprogram);
 	mat4 scaleMatrix = S((GLfloat) 0.1, (GLfloat) 0.1, (GLfloat) 0.1);
 	glUniformMatrix4fv(glGetUniformLocation(snowprogram, "scaleMatrix"), 1, GL_TRUE, scaleMatrix.m);
 	DrawModelInstanced(plateModel, snowprogram, "inPosition", NULL, "inTexCoord", no_particles);
-
 	printError("GL display draw snow");
 
-	// Draw some informative text on the screen	
+
+	// Draw some informative text on the screen
 	drawInformationText(simulationSpeed, windDirection);
 	printError("GL display draw text");
 
@@ -280,6 +297,11 @@ void display(void)
 	glutSwapBuffers();
 	printError("GL display swap buffers");
 }
+
+
+// -----------------------------------------------------------------------------
+//          NECESSARY FUNCTIONS
+// -----------------------------------------------------------------------------
 
 void timer(int i)
 {
@@ -294,8 +316,9 @@ void reshape(GLsizei w, GLsizei h)
 }
 
 
-
-
+// -----------------------------------------------------------------------------
+//          MAIN
+// -----------------------------------------------------------------------------
 
 int main(int argc, char *argv[])
 {
