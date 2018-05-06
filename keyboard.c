@@ -12,13 +12,16 @@
 
 void handleKeyboardEvent()
 {
-#ifdef WIN32
 	if (glutKeyIsDown(27)) // ESC key
 	{
+#ifdef WIN32
 		// Send exit message to windows
 		PostQuitMessage(0);
-	}
+#else
+        // Hard exit if not on windows
+        exit(0);
 #endif
+	}
 
 	if (glutKeyIsDown('w') || glutKeyIsDown('W'))
 	{
@@ -167,7 +170,7 @@ void keyReleased(unsigned char key, int x, int y)
 			isSnowing = 0;
 		}
 		else
-		{ 
+		{
 			isSnowing = 1;
 		}
 	}
