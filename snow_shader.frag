@@ -1,28 +1,30 @@
+// snow_shader.frag
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// A fragment shader that handles the snowflakes and decides between snowflakes
+// and white squares
+
 #version 450
 
-out vec4 outColor;
-
 in vec2 texCoord;
-//in int InstanceID;
-//in vec3 normal;
 in vec3 exSurface;
 in float discardFrag;
 in float distanceToObject;
+
+out vec4 outColor;
 
 uniform sampler2D snowflakeTex;
 
 void main(void)
 {
+    // Frustum culling
 	if (discardFrag > 0)
 	{
 		discard;
 		return;
 	}
-    //outColor = texture(snowflakeTex, texCoord);
-    //outColor = vec4(InstanceID,0,0,1);
-    //outColor = vec4(data_SSBO[InstanceID],0,0,1);
 
-
+    // LOD: if close: snowflake texture
     if (distanceToObject < 30.0)
     {
     	vec4 texColor = texture(snowflakeTex, texCoord);
@@ -32,6 +34,7 @@ void main(void)
     	}
     	outColor = texColor;
     }
+    // LOD: if far away: white square
     else
     {
     	outColor = vec4(1,1,1,1);
