@@ -174,6 +174,7 @@ void init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glGenerateMipmap(GL_TEXTURE_2D);
+	GLuint heightTexUnit = 3;
 
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, snowTex);
@@ -182,6 +183,7 @@ void init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glGenerateMipmap(GL_TEXTURE_2D);
+	GLuint snowTexUnit = 4;
 
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, snowflakeTex);
@@ -190,6 +192,7 @@ void init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glGenerateMipmap(GL_TEXTURE_2D);
+	GLuint snowflakeTexUnit = 5;
 
 	glActiveTexture(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_2D, bumpTex);
@@ -198,20 +201,24 @@ void init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glGenerateMipmap(GL_TEXTURE_2D);
+	GLuint bumpTexUnit = 7;
+
+	// GL_TEXTURE6 is used for the cubemap
+	GLuint cubemapTexUnit = 6;
 
 	printError("GL init bind textures");
 
 
     // Send all numbers for the different textures
 	glUseProgram(snowprogram);
-	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), heightTex);
-	glUniform1i(glGetUniformLocation(snowprogram, "snowflakeTex"), snowflakeTex);
+	glUniform1i(glGetUniformLocation(snowprogram, "heightTex"), heightTexUnit);
+	glUniform1i(glGetUniformLocation(snowprogram, "snowflakeTex"), snowflakeTexUnit);
 	glUseProgram(program);
-	glUniform1i(glGetUniformLocation(program, "snowTex"), snowTex);
-	glUniform1i(glGetUniformLocation(program, "cubemap"), 6); // Since GL_TEXTURE6 is used for the cubemap
-	glUniform1i(glGetUniformLocation(program, "bumpTex"), bumpTex);
+	glUniform1i(glGetUniformLocation(program, "snowTex"), snowTexUnit);
+	glUniform1i(glGetUniformLocation(program, "cubemap"), cubemapTexUnit);
+	glUniform1i(glGetUniformLocation(program, "bumpTex"), bumpTexUnit);
 	glUseProgram(texprogram);
-	glUniform1i(glGetUniformLocation(texprogram, "tex"), 6); // Since GL_TEXTURE6 is used for the cubemap
+	glUniform1i(glGetUniformLocation(texprogram, "tex"), cubemapTexUnit);
 	printError("GL init send texture unit numbers to shader");
 
 
