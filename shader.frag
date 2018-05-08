@@ -5,7 +5,7 @@
 // box and the snowflakes
 
 #version 450
-#define no_particles 655360
+#define no_particles 327680
 #define snowFactor 1000.0
 
 // ----------- IN -------------

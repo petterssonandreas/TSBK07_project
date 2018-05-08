@@ -4,7 +4,7 @@
 // A vertex shader that handles the snowflakes and their physics. 
 
 #version 450
-#define no_particles 655360
+#define no_particles 327680
 #define no_vertices 262144
 #define scaling_factor 20.0 // For the hight-map. Same as in main.c
 #define size_of_world 256

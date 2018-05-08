@@ -5,7 +5,7 @@
 // box and the snowflakes
 
 #version 450
-#define no_particles 655360
+#define no_particles 327680
 #define size_of_world 256
 #define no_vertices 262144
 
