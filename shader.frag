@@ -1,7 +1,7 @@
 // shader.frag
 // Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
 //
-// A fragment shader that handles all object in the scene except for the sky
+// A fragment shader that handles all objects in the scene except for the sky-
 // box and the snowflakes
 
 #version 450

@@ -10,7 +10,7 @@ in vec3 inPosition;
 in vec3 inNormal;
 in vec2 inTexCoord;
 
- layout(std430, binding = 3) buffer layoutName
+ layout(std430, binding = 0) buffer layoutName
  {
     int snow[2*256*2*256];
     vec3 data_SSBO[no_particles];
