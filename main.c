@@ -41,9 +41,9 @@
 
 
 // vertex array object
-Model *terrainModel, *lakeModel, *plateModel;
+Model *terrainModel, *lakeModel, *plateModel, *loadingModel;
 // Reference to shader program
-GLuint program, snowprogram, texprogram;
+GLuint program, snowprogram, texprogram, loadprogram;
 // Textures for terrain and lake height maps
 TextureData terrainTexture, lakeTexture;
 // References to different textures
@@ -54,6 +54,7 @@ GLuint snowTex;
 GLuint heightTex;
 GLuint snowflakeTex;
 GLuint bumpTex;
+GLuint loadTex;
 
 // References to the textures used in skybox
 TextureData texData[6];
@@ -77,6 +78,41 @@ struct vec2int windDirection;
 // -----------------------------------------------------------------------------
 //          INIT
 // -----------------------------------------------------------------------------
+void loadingScreenInit()
+{
+	// GL inits
+	glClearColor(1, 0, 0, 1);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	printError("GL inits");
+
+	loadprogram = loadShaders("load.vert", "load.frag");
+	printError("GL init load shader programs");
+
+
+	LoadTGATextureSimple("./res/load.tga", &loadTex);
+	
+	loadingModel = LoadModelPlus("./res/plate.obj");
+
+
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, loadTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+
+	
+	glUseProgram(loadprogram);
+	glUniform1i(glGetUniformLocation(loadprogram, "loadTex"), 8);
+}
+
+
 
 
 void init(void)
@@ -248,12 +284,28 @@ void init(void)
 //          DISPLAY
 // -----------------------------------------------------------------------------
 
+int firstTime = 1;
 
 void display(void)
 {
 	// clear the screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	printError("GL display clear screen");
+
+
+	if (firstTime == 1)
+	{
+		glUseProgram(loadprogram);
+		draw(loadingModel, S(1,1,1));
+
+		glutSwapBuffers();
+		printError("GL display swap buffers");
+
+		firstTime = 0;
+
+		init();
+		return;
+	}
 
 
 	// Handle key events, i.e. movement
@@ -334,17 +386,17 @@ int main(int argc, char *argv[])
 	glutInitContextVersion(3, 2);
 	glutInitWindowSize(WIN_X_SIZE, WIN_Y_SIZE);
 	glutCreateWindow ("TSBK07 Project");
-	glutFullScreen();
+	//glutFullScreen();
 #ifdef WIN32
 	glewInit();
 #endif
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
-	glutPassiveMotionFunc(mouseMoved);
+	//glutPassiveMotionFunc(mouseMoved);
 	glutKeyboardUpFunc(keyReleased);
-	glutHideCursor();
+	//glutHideCursor();
 	glutRepeatingTimer(20);
-	init();
+	loadingScreenInit();
 	loadSkyboxTextures(texData);
 	sfMakeRasterFont();
 	sfSetRasterSize(WIN_X_SIZE, WIN_Y_SIZE);
