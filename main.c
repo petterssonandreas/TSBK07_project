@@ -1,7 +1,7 @@
-// Project for TSBK07
-// Andreas Pettersson & Jonas Ehn
-
-
+// main.c
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// This is the main file of the project
 
 // -----------------------------------------------------------------------------
 //          INCLUDES

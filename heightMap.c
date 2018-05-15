@@ -1,3 +1,7 @@
+// heightMap.c
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// The functions that generate the terrain from an TGA-image
 
 #include <math.h>
 #include <time.h>

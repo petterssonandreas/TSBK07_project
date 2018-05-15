@@ -1,3 +1,7 @@
+// keyboard.c
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// This file handles the keyboard and mouse input
 
 #include "keyboard.h"
 #include "VectorUtils3.h"

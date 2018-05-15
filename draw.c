@@ -1,4 +1,7 @@
-
+// draw.c
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// This file contains the function calls that draws objects in the scene
 
 #include "MicroGlut.h"
 #include "loadobj.h"

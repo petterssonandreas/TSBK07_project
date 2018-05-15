@@ -1,3 +1,8 @@
+// heightMap.h
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// The functions that generate the terrain from an TGA-image
+
 #ifndef HEIGHTMAP_H
 #define HEIGHTMAP_H
 

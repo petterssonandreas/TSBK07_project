@@ -1,3 +1,7 @@
+// frustum.c
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// This file contains the calls that involves the frustum
 
 #include "MicroGlut.h"
 #include "VectorUtils3.h"

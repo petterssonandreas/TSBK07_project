@@ -1,3 +1,8 @@
+// keyboard.h
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// This file handles the keyboard and mouse input
+
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 

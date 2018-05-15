@@ -1,3 +1,7 @@
+// initFunctions.c
+// Written by Andreas Pettersson and Jonas Ehn as part of the course TSBK07
+//
+// This file contains the initialization functions
 
 #include "MicroGlut.h"
 #include "VectorUtils3.h"
